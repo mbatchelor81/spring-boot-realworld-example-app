@@ -23,5 +23,13 @@ jobs:
           java-version: ${{ matrix.java }}
           cache: gradle
 
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Generate Java code
+        run: ./gradlew generateJava --no-daemon --info
+        timeout-minutes: 10
+
       - name: Build and Test
         run: ./gradlew clean test --no-daemon --warning-mode all
+        timeout-minutes: 15
