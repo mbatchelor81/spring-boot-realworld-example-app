@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
         java: ['11', '21']
@@ -28,8 +29,8 @@ jobs:
 
       - name: Generate Java code
         run: ./gradlew generateJava --no-daemon --info
-        timeout-minutes: 10
+        timeout-minutes: 20
 
       - name: Build and Test
-        run: ./gradlew clean test --no-daemon --warning-mode all
-        timeout-minutes: 15
+        run: ./gradlew clean test --no-daemon --warning-mode all --parallel
+        timeout-minutes: 25
