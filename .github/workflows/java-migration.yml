@@ -9,8 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     strategy:
+      fail-fast: false
       matrix:
         java: ['11', '21']
 
@@ -28,9 +28,9 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          key: ${{ runner.os }}-java-${{ matrix.java }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-
+            ${{ runner.os }}-java-${{ matrix.java }}-gradle-
 
       - name: Build and Test
-        run: ./gradlew clean test
+        run: ./gradlew clean test --no-daemon --warning-mode all
