@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+
     strategy:
       matrix:
         java: ['11', '21']
@@ -22,15 +22,15 @@ jobs:
         with:
           distribution: zulu
           java-version: ${{ matrix.java }}
-          cache: gradle
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
-      - name: Generate Java code
-        run: ./gradlew generateJava --no-daemon --info
-        timeout-minutes: 20
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Build and Test
-        run: ./gradlew clean test --no-daemon --warning-mode all --parallel
-        timeout-minutes: 25
+        run: ./gradlew clean test
