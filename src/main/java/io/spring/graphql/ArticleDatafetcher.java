@@ -135,6 +135,62 @@ public class ArticleDatafetcher {
         .build();
   }
 
+  @DgsData(parentType = PROFILE.TYPE_NAME, field = PROFILE.Bookmarks)
+  public DataFetcherResult<ArticlesConnection> userBookmarks(
+      @InputArgument("first") Integer first,
+      @InputArgument("after") String after,
+      @InputArgument("last") Integer last,
+      @InputArgument("before") String before,
+      DgsDataFetchingEnvironment dfe) {
+    if (first == null && last == null) {
+      throw new IllegalArgumentException("first 和 last 必须只存在一个");
+    }
+
+    User current = SecurityUtil.getCurrentUser().orElse(null);
+    Profile profile = dfe.getSource();
+
+    CursorPager<ArticleData> articles;
+    if (first != null) {
+      articles =
+          articleQueryService.findRecentArticlesWithCursor(
+              null,
+              null,
+              null,
+              profile.getUsername(),
+              new CursorPageParameter<>(DateTimeCursor.parse(after), first, Direction.NEXT),
+              current);
+    } else {
+      articles =
+          articleQueryService.findRecentArticlesWithCursor(
+              null,
+              null,
+              null,
+              profile.getUsername(),
+              new CursorPageParameter<>(DateTimeCursor.parse(before), last, Direction.PREV),
+              current);
+    }
+    graphql.relay.PageInfo pageInfo = buildArticlePageInfo(articles);
+
+    ArticlesConnection articlesConnection =
+        ArticlesConnection.newBuilder()
+            .pageInfo(pageInfo)
+            .edges(
+                articles.getData().stream()
+                    .map(
+                        a ->
+                            ArticleEdge.newBuilder()
+                                .cursor(a.getCursor().toString())
+                                .node(buildArticleResult(a))
+                                .build())
+                    .collect(Collectors.toList()))
+            .build();
+    return DataFetcherResult.<ArticlesConnection>newResult()
+        .data(articlesConnection)
+        .localContext(
+            articles.getData().stream().collect(Collectors.toMap(ArticleData::getSlug, a -> a)))
+        .build();
+  }
+
   @DgsData(parentType = PROFILE.TYPE_NAME, field = PROFILE.Favorites)
   public DataFetcherResult<ArticlesConnection> userFavorites(
       @InputArgument("first") Integer first,
@@ -156,6 +212,7 @@ public class ArticleDatafetcher {
               null,
               null,
               profile.getUsername(),
+              null,
               new CursorPageParameter<>(DateTimeCursor.parse(after), first, Direction.NEXT),
               current);
     } else {
@@ -164,6 +221,7 @@ public class ArticleDatafetcher {
               null,
               null,
               profile.getUsername(),
+              null,
               new CursorPageParameter<>(DateTimeCursor.parse(before), last, Direction.PREV),
               current);
     }
@@ -210,6 +268,7 @@ public class ArticleDatafetcher {
               null,
               profile.getUsername(),
               null,
+              null,
               new CursorPageParameter<>(DateTimeCursor.parse(after), first, Direction.NEXT),
               current);
     } else {
@@ -217,6 +276,7 @@ public class ArticleDatafetcher {
           articleQueryService.findRecentArticlesWithCursor(
               null,
               profile.getUsername(),
+              null,
               null,
               new CursorPageParameter<>(DateTimeCursor.parse(before), last, Direction.PREV),
               current);
@@ -265,6 +325,7 @@ public class ArticleDatafetcher {
               withTag,
               authoredBy,
               favoritedBy,
+              null,
               new CursorPageParameter<>(DateTimeCursor.parse(after), first, Direction.NEXT),
               current);
     } else {
@@ -273,6 +334,7 @@ public class ArticleDatafetcher {
               withTag,
               authoredBy,
               favoritedBy,
+              null,
               new CursorPageParameter<>(DateTimeCursor.parse(before), last, Direction.PREV),
               current);
     }
@@ -373,6 +435,8 @@ public class ArticleDatafetcher {
         .body(articleData.getBody())
         .createdAt(ISODateTimeFormat.dateTime().withZoneUTC().print(articleData.getCreatedAt()))
         .description(articleData.getDescription())
+        .bookmarked(articleData.isBookmarked())
+        .bookmarksCount(articleData.getBookmarksCount())
         .favorited(articleData.isFavorited())
         .favoritesCount(articleData.getFavoritesCount())
         .slug(articleData.getSlug())

@@ -58,6 +58,7 @@ The application includes seed data with sample users, articles, tags, comments, 
 - 7 tags (java, spring-boot, web-development, tutorial, best-practices, microservices, api-design)
 - 5 comments on articles
 - 6 article favorites
+- 5 article bookmarks
 - 4 follow relationships between users
 
 # Getting started
@@ -117,6 +118,21 @@ The repository contains a lot of test cases to cover both api test and repositor
 Use spotless for code format.
 
     ./gradlew spotlessJavaApply
+
+# API Endpoints
+
+The application provides both REST and GraphQL APIs:
+
+## REST Endpoints (Article Bookmarks)
+- `POST /articles/:slug/bookmark` - Bookmark an article
+- `DELETE /articles/:slug/bookmark` - Unbookmark an article  
+- `GET /articles?bookmarked=:username` - Get articles bookmarked by user
+
+## GraphQL Mutations (Article Bookmarks)
+- `bookmarkArticle(slug: String!)` - Bookmark an article
+- `unbookmarkArticle(slug: String!)` - Unbookmark an article
+
+See the GraphQL schema at `src/main/resources/schema/schema.graphqls` for full API documentation.
 
 # Help
 
