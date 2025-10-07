@@ -29,6 +29,8 @@ type Mutation {
     ### Article
     createArticle(input: CreateArticleInput!): ArticlePayload
     updateArticle(slug: String!, changes: UpdateArticleInput!): ArticlePayload
+    bookmarkArticle(slug: String!): ArticlePayload
+    unbookmarkArticle(slug: String!): ArticlePayload
     favoriteArticle(slug: String!): ArticlePayload
     unfavoriteArticle(slug: String!): ArticlePayload
     deleteArticle(slug: String!): DeletionStatus
@@ -47,6 +49,8 @@ schema {
 type Article {
     author: Profile!
     body: String!
+    bookmarked: Boolean!
+    bookmarksCount: Int!
     comments(first: Int, after: String, last: Int, before: String): CommentsConnection
     createdAt: String!
     description: String!
@@ -106,6 +110,7 @@ type Profile {
     following: Boolean!
     image: String
     articles(first: Int, after: String, last: Int, before: String): ArticlesConnection
+    bookmarks(first: Int, after: String, last: Int, before: String): ArticlesConnection
     favorites(first: Int, after: String, last: Int, before: String): ArticlesConnection
     feed(first: Int, after: String, last: Int, before: String): ArticlesConnection
 }
