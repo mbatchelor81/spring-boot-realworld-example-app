@@ -83,6 +83,28 @@ public class CurrentUserApiTest extends TestWithCurrentUser {
   }
 
   @Test
+  public void should_get_401_with_malformed_authorization_header() throws Exception {
+    given()
+        .contentType("application/json")
+        .header("Authorization", "InvalidFormat")
+        .when()
+        .get("/user")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
+  public void should_get_401_with_authorization_header_missing_token() throws Exception {
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token ")
+        .when()
+        .get("/user")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
   public void should_update_current_user_profile() throws Exception {
     String newEmail = "newemail@example.com";
     String newBio = "updated";
@@ -142,6 +164,83 @@ public class CurrentUserApiTest extends TestWithCurrentUser {
         .then()
         .statusCode(422)
         .body("errors.email[0]", equalTo("email already exist"));
+  }
+
+  @Test
+  public void should_get_error_if_username_exists_when_update_user_profile() throws Exception {
+    String newEmail = "newemail@example.com";
+    String newBio = "updated";
+    String newUsername = "existinguser";
+
+    Map<String, Object> param = prepareUpdateParam(newEmail, newBio, newUsername);
+
+    when(userRepository.findByUsername(eq(newUsername)))
+        .thenReturn(Optional.of(new User("other@example.com", newUsername, "123", "", "")));
+    when(userRepository.findByEmail(eq(newEmail))).thenReturn(Optional.empty());
+
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.username[0]", equalTo("username already exist"));
+  }
+
+  @Test
+  public void should_get_error_if_email_invalid_when_update_user_profile() throws Exception {
+    String newEmail = "invalidemail";
+    String newBio = "updated";
+    String newUsername = "newusername";
+
+    Map<String, Object> param = prepareUpdateParam(newEmail, newBio, newUsername);
+
+    when(userRepository.findByUsername(eq(newUsername))).thenReturn(Optional.empty());
+    when(userRepository.findByEmail(eq(newEmail))).thenReturn(Optional.empty());
+
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.email[0]", equalTo("should be an email"));
+  }
+
+  @Test
+  public void should_get_error_if_both_email_and_username_exist_when_update_user_profile()
+      throws Exception {
+    String newEmail = "existing@example.com";
+    String newBio = "updated";
+    String newUsername = "existinguser";
+
+    Map<String, Object> param = prepareUpdateParam(newEmail, newBio, newUsername);
+
+    when(userRepository.findByEmail(eq(newEmail)))
+        .thenReturn(Optional.of(new User(newEmail, "otheruser", "123", "", "")));
+    when(userRepository.findByUsername(eq(newUsername)))
+        .thenReturn(Optional.of(new User("other@example.com", newUsername, "123", "", "")));
+
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.email[0]", equalTo("email already exist"))
+        .body("errors.username[0]", equalTo("username already exist"));
   }
 
   private HashMap<String, Object> prepareUpdateParam(
