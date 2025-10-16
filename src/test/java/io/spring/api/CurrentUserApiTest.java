@@ -176,4 +176,66 @@ public class CurrentUserApiTest extends TestWithCurrentUser {
         .then()
         .statusCode(401);
   }
+
+  @Test
+  public void should_show_error_for_invalid_email_format_during_update() throws Exception {
+    String invalidEmail = "notanemail";
+    String newBio = "updated bio";
+
+    Map<String, Object> param = prepareUpdateParam(invalidEmail, newBio, username);
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.email[0]", equalTo("should be an email"));
+  }
+
+  @Test
+  public void should_show_error_for_duplicated_username_during_update() throws Exception {
+    String newUsername = "existinguser";
+    User existingUser = new User("existing@example.com", newUsername, "123", "", "");
+
+    when(userRepository.findByUsername(eq(newUsername))).thenReturn(Optional.of(existingUser));
+    when(userRepository.findByEmail(eq(email))).thenReturn(Optional.empty());
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    Map<String, Object> param = prepareUpdateParam(email, "", newUsername);
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.username[0]", equalTo("username already exist"));
+  }
+
+  @Test
+  public void should_get_401_with_malformed_authorization_header() throws Exception {
+    given()
+        .contentType("application/json")
+        .header("Authorization", "InvalidFormat")
+        .when()
+        .get("/user")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
+  public void should_get_401_with_missing_token_value_in_header() throws Exception {
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token")
+        .when()
+        .get("/user")
+        .then()
+        .statusCode(401);
+  }
 }
