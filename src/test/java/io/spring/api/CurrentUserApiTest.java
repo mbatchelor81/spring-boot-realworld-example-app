@@ -176,4 +176,77 @@ public class CurrentUserApiTest extends TestWithCurrentUser {
         .then()
         .statusCode(401);
   }
+
+  @Test
+  public void should_get_401_with_header_missing_token_part_on_get() throws Exception {
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token")
+        .when()
+        .get("/user")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
+  public void should_get_401_with_header_missing_token_part_on_update() throws Exception {
+    Map<String, Object> param = prepareUpdateParam("newemail@example.com", "bio", "newusername");
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token")
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
+  public void should_show_error_for_invalid_email_format_on_update() throws Exception {
+    String newEmail = "notanemail";
+    String newBio = "updated";
+    String newUsername = "newusernamee";
+
+    Map<String, Object> param = prepareUpdateParam(newEmail, newBio, newUsername);
+
+    when(userRepository.findByUsername(eq(newUsername))).thenReturn(Optional.empty());
+    when(userRepository.findByEmail(eq(newEmail))).thenReturn(Optional.empty());
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.email[0]", equalTo("should be an email"));
+  }
+
+  @Test
+  public void should_show_error_for_duplicate_username_on_update() throws Exception {
+    String newEmail = "newemail@example.com";
+    String newBio = "updated";
+    String newUsername = "existingusername";
+
+    Map<String, Object> param = prepareUpdateParam(newEmail, newBio, newUsername);
+
+    when(userRepository.findByEmail(eq(newEmail))).thenReturn(Optional.empty());
+    when(userRepository.findByUsername(eq(newUsername)))
+        .thenReturn(Optional.of(new User(newEmail, newUsername, "123", "", "")));
+
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.username[0]", equalTo("username already exist"));
+  }
 }
