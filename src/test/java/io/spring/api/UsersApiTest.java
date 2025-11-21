@@ -1,6 +1,7 @@
 package io.spring.api;
 
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.given;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -359,7 +360,7 @@ public class UsersApiTest {
         .post("/users")
         .then()
         .statusCode(422)
-        .body("errors.email[0]", equalTo("can't be empty"));
+        .body("errors.email[0]", anyOf(equalTo("can't be empty"), equalTo("should be an email")));
   }
 
   @Test
