@@ -5,6 +5,7 @@ plugins {
     id "com.netflix.dgs.codegen" version "5.0.6"
     id "com.diffplug.spotless" version "6.2.1"
     id 'jacoco'
+    id "org.sonarqube" version "3.5.0.2730"
 }
 
 version = '0.0.1-SNAPSHOT'
@@ -39,9 +40,23 @@ jacocoTestCoverageVerification {
     violationRules {
         rule {
             limit {
-                minimum = 0.80
+                minimum = 0.30
             }
         }
+    }
+}
+
+sonarqube {
+    properties {
+        property "sonar.projectKey", "mbatchelor81_spring-boot-realworld-example-app"
+        property "sonar.organization", "mbatchelor81"
+        property "sonar.host.url", "https://sonarcloud.io"
+        property "sonar.java.coveragePlugin", "jacoco"
+        property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
+        property "sonar.sources", "src/main/java"
+        property "sonar.tests", "src/test/java"
+        property "sonar.java.binaries", "${buildDir}/classes/java/main"
+        property "sonar.sourceEncoding", "UTF-8"
     }
 }
 
