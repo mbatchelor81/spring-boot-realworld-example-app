@@ -27,23 +27,148 @@ jacoco {
 
 jacocoTestReport {
     dependsOn test
+    
     reports {
         xml.required = true
+        xml.outputLocation = file("${buildDir}/reports/jacoco/test/jacocoTestReport.xml")
+        
         html.required = true
-        csv.required = false
+        html.outputLocation = file("${buildDir}/reports/jacoco/test/html")
+        
+        csv.required = true
+        csv.outputLocation = file("${buildDir}/reports/jacoco/test/jacocoTestReport.csv")
     }
+    
+    // Exclude generated code and common patterns from coverage
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/graphql/**',           // Generated GraphQL code
+                '**/config/**',            // Configuration classes
+                '**/Application.class',    // Main application class
+                '**/*Config.class',        // Config classes
+                '**/*Configuration.class', // Configuration classes
+                '**/dto/**',               // DTOs (data transfer objects)
+                '**/entity/**'             // JPA entities
+            ])
+        }))
+    }
+    
     finalizedBy jacocoTestCoverageVerification
 }
 
 jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+    
     violationRules {
+        // Overall project coverage rule
         rule {
+            element = 'BUNDLE'
             limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
                 minimum = 0.80
             }
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.75
+            }
+        }
+        
+        // Class-level coverage rule
+        rule {
+            element = 'CLASS'
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.70
+            }
+            excludes = [
+                '*.graphql.*',
+                '*.config.*',
+                '*.*Config',
+                '*.*Configuration',
+                '*.dto.*',
+                '*.entity.*',
+                '*.Application'
+            ]
+        }
+        
+        // Method complexity rule
+        rule {
+            element = 'METHOD'
+            limit {
+                counter = 'COMPLEXITY'
+                value = 'TOTALCOUNT'
+                maximum = 15
+            }
+            excludes = [
+                '*.graphql.*',
+                '*.config.*'
+            ]
         }
     }
 }
+
+// Task to print coverage summary after test execution
+tasks.register('coverageSummary') {
+    dependsOn jacocoTestReport
+    doLast {
+        def reportFile = file("${buildDir}/reports/jacoco/test/jacocoTestReport.csv")
+        if (reportFile.exists()) {
+            println "\n" + "=".repeat(80)
+            println "JACOCO TEST COVERAGE SUMMARY"
+            println "=".repeat(80)
+            
+            def lines = reportFile.readLines()
+            if (lines.size() > 1) {
+                def headers = lines[0].split(',')
+                def totals = lines[lines.size() - 1].split(',')
+                
+                // Parse coverage metrics
+                def instructionMissed = totals[3] as int
+                def instructionCovered = totals[4] as int
+                def branchMissed = totals[5] as int
+                def branchCovered = totals[6] as int
+                def lineMissed = totals[7] as int
+                def lineCovered = totals[8] as int
+                def complexityTotal = totals[9] as int
+                def methodMissed = totals[11] as int
+                def methodCovered = totals[12] as int
+                
+                // Calculate percentages
+                def instructionTotal = instructionMissed + instructionCovered
+                def branchTotal = branchMissed + branchCovered
+                def lineTotal = lineMissed + lineCovered
+                def methodTotal = methodMissed + methodCovered
+                
+                def instructionPct = instructionTotal > 0 ? (instructionCovered / instructionTotal * 100) : 0
+                def branchPct = branchTotal > 0 ? (branchCovered / branchTotal * 100) : 0
+                def linePct = lineTotal > 0 ? (lineCovered / lineTotal * 100) : 0
+                def methodPct = methodTotal > 0 ? (methodCovered / methodTotal * 100) : 0
+                
+                println String.format("%-20s %10s %10s %10s", "Metric", "Covered", "Total", "Percentage")
+                println "-".repeat(80)
+                println String.format("%-20s %10d %10d %9.2f%%", "Instructions", instructionCovered, instructionTotal, instructionPct)
+                println String.format("%-20s %10d %10d %9.2f%%", "Branches", branchCovered, branchTotal, branchPct)
+                println String.format("%-20s %10d %10d %9.2f%%", "Lines", lineCovered, lineTotal, linePct)
+                println String.format("%-20s %10d %10d %9.2f%%", "Methods", methodCovered, methodTotal, methodPct)
+                println String.format("%-20s %10d", "Complexity", complexityTotal)
+                println "=".repeat(80)
+                println "HTML Report: ${buildDir}/reports/jacoco/test/html/index.html"
+                println "XML Report:  ${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
+                println "CSV Report:  ${buildDir}/reports/jacoco/test/jacocoTestReport.csv"
+                println "=".repeat(80) + "\n"
+            }
+        } else {
+            println "Coverage report not found. Run './gradlew test' first."
+        }
+    }
+}
+
+// Automatically show coverage summary after test report generation
+jacocoTestReport.finalizedBy coverageSummary
 
 repositories {
     mavenCentral()
