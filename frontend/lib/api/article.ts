@@ -29,6 +29,19 @@ const ArticleAPI = {
       },
     }),
 
+  bookmark: (slug) =>
+    axios.post(`${SERVER_BASE_URL}/articles/${slug}/bookmark`),
+
+  unbookmark: (slug) =>
+    axios.delete(`${SERVER_BASE_URL}/articles/${slug}/bookmark`),
+
+  bookmarkedBy: (author, page) =>
+    axios.get(
+      `${SERVER_BASE_URL}/articles?bookmarked=${encodeURIComponent(
+        author
+      )}&${getQuery(10, page)}`
+    ),
+
   favorite: (slug) =>
     axios.post(`${SERVER_BASE_URL}/articles/${slug}/favorite`),
 
