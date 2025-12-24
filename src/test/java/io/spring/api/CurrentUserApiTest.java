@@ -176,4 +176,105 @@ public class CurrentUserApiTest extends TestWithCurrentUser {
         .then()
         .statusCode(401);
   }
+
+  @Test
+  public void should_get_error_for_invalid_email_when_update_user_profile() throws Exception {
+    String newEmail = "invalidemail";
+    String newBio = "updated bio";
+    String newUsername = "newusername";
+
+    Map<String, Object> param = prepareUpdateParam(newEmail, newBio, newUsername);
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.email[0]", equalTo("should be an email"));
+  }
+
+  @Test
+  public void should_get_error_if_username_exists_when_update_user_profile() throws Exception {
+    String newEmail = "newemail@example.com";
+    String newBio = "updated";
+    String newUsername = "existingusername";
+
+    Map<String, Object> param = prepareUpdateParam(newEmail, newBio, newUsername);
+
+    when(userRepository.findByUsername(eq(newUsername)))
+        .thenReturn(Optional.of(new User("other@example.com", newUsername, "123", "", "")));
+    when(userRepository.findByEmail(eq(newEmail))).thenReturn(Optional.empty());
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.username[0]", equalTo("username already exist"));
+  }
+
+  @Test
+  public void should_update_user_profile_with_only_bio() throws Exception {
+    String newBio = "new bio content";
+
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("bio", newBio);
+                  }
+                });
+          }
+        };
+
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(200);
+  }
+
+  @Test
+  public void should_update_user_profile_with_only_image() throws Exception {
+    String newImage = "https://example.com/newimage.jpg";
+
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("image", newImage);
+                  }
+                });
+          }
+        };
+
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(200);
+  }
 }
