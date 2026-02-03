@@ -176,4 +176,249 @@ public class CurrentUserApiTest extends TestWithCurrentUser {
         .then()
         .statusCode(401);
   }
+
+  @Test
+  public void should_get_401_with_authorization_header_missing_token_value() throws Exception {
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token")
+        .when()
+        .get("/user")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
+  public void should_get_401_when_user_not_found_for_valid_token() throws Exception {
+    String validTokenForDeletedUser = "validTokenForDeletedUser";
+    String deletedUserId = "deleted-user-id";
+    when(jwtService.getSubFromToken(eq(validTokenForDeletedUser)))
+        .thenReturn(Optional.of(deletedUserId));
+    when(userRepository.findById(eq(deletedUserId))).thenReturn(Optional.empty());
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + validTokenForDeletedUser)
+        .when()
+        .get("/user")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
+  public void should_get_error_if_username_exists_when_update_user_profile() throws Exception {
+    String newEmail = "newemail@example.com";
+    String newBio = "updated";
+    String newUsername = "existingusername";
+
+    Map<String, Object> param = prepareUpdateParam(newEmail, newBio, newUsername);
+
+    when(userRepository.findByEmail(eq(newEmail))).thenReturn(Optional.empty());
+    when(userRepository.findByUsername(eq(newUsername)))
+        .thenReturn(Optional.of(new User("other@email.com", newUsername, "123", "", "")));
+
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.username[0]", equalTo("username already exist"));
+  }
+
+  @Test
+  public void should_get_error_if_both_email_and_username_exist_when_update() throws Exception {
+    String newEmail = "existing@example.com";
+    String newBio = "updated";
+    String newUsername = "existingusername";
+
+    Map<String, Object> param = prepareUpdateParam(newEmail, newBio, newUsername);
+
+    when(userRepository.findByEmail(eq(newEmail)))
+        .thenReturn(Optional.of(new User(newEmail, "otheruser", "123", "", "")));
+    when(userRepository.findByUsername(eq(newUsername)))
+        .thenReturn(Optional.of(new User("other@email.com", newUsername, "123", "", "")));
+
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422);
+  }
+
+  @Test
+  public void should_get_error_for_invalid_email_format_when_update() throws Exception {
+    String invalidEmail = "not-an-email";
+    String newBio = "updated";
+    String newUsername = "newusername";
+
+    Map<String, Object> param = prepareUpdateParam(invalidEmail, newBio, newUsername);
+
+    when(userRepository.findByUsername(eq(newUsername))).thenReturn(Optional.empty());
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.email[0]", equalTo("should be an email"));
+  }
+
+  @Test
+  public void should_update_only_bio_field() throws Exception {
+    String newBio = "This is my new bio";
+
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("bio", newBio);
+                  }
+                });
+          }
+        };
+
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(200);
+  }
+
+  @Test
+  public void should_update_password_successfully() throws Exception {
+    String newPassword = "newSecurePassword123";
+
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("password", newPassword);
+                  }
+                });
+          }
+        };
+
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(200);
+  }
+
+  @Test
+  public void should_update_image_url_successfully() throws Exception {
+    String newImageUrl = "https://example.com/new-avatar.jpg";
+
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("image", newImageUrl);
+                  }
+                });
+          }
+        };
+
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(200);
+  }
+
+  @Test
+  public void should_allow_user_to_keep_same_email_when_updating() throws Exception {
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("email", email);
+                    put("bio", "updated bio");
+                  }
+                });
+          }
+        };
+
+    when(userRepository.findByEmail(eq(email))).thenReturn(Optional.of(user));
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(200);
+  }
+
+  @Test
+  public void should_allow_user_to_keep_same_username_when_updating() throws Exception {
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("username", username);
+                    put("bio", "updated bio");
+                  }
+                });
+          }
+        };
+
+    when(userRepository.findByUsername(eq(username))).thenReturn(Optional.of(user));
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(200);
+  }
 }
