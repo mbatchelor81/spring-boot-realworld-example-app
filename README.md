@@ -62,11 +62,20 @@ The application includes seed data with sample users, articles, tags, comments, 
 
 # Getting started
 
+## Prerequisites
+
+- **Java 11** — required for the backend. The `.java-version` file in the project root enforces this via jenv.
+- **Node.js 16** — required for the frontend. The `frontend/.nvmrc` file enforces this via nvm.
+
+See [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) for detailed installation instructions.
+
 ## Backend (Spring Boot)
 
-You'll need Java 11 installed.
+From the project root:
 
-    ./gradlew bootRun
+```bash
+./gradlew bootRun
+```
 
 **Note**: `bootRun` automatically cleans and recreates the database with seed data on each run to avoid Flyway migration conflicts during development.
 
@@ -77,23 +86,18 @@ Alternatively, you can run
 
 ## Frontend (Next.js)
 
-You'll need Node.js installed. **Recommended: Node v14-16** (specified in `frontend/.nvmrc`).
+From the `frontend/` directory:
 
-If using `nvm`, switch to the correct version:
 ```bash
 cd frontend
 nvm use
-```
-
-Then install and run:
-```bash
 npm install
 npm run dev
 ```
 
 The frontend will run on http://localhost:3000 and connect to the backend on port 8080.
 
-**Note**: The `npm run dev` script includes `NODE_OPTIONS=--openssl-legacy-provider` for compatibility with newer Node versions, but Node 14-16 is still recommended for best compatibility.
+**Note**: The `npm run dev` script includes `NODE_OPTIONS=--openssl-legacy-provider` for compatibility with newer Node versions, but Node 16 is recommended for best compatibility.
 
 # Try it out with [Docker](https://www.docker.com/)
 
