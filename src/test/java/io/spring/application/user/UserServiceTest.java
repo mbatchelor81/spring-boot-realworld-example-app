@@ -69,18 +69,16 @@ public class UserServiceTest {
             .image("new image")
             .build();
 
-    existingUser.update(
-        updateParam.getEmail(),
-        updateParam.getUsername(),
-        updateParam.getPassword(),
-        updateParam.getBio(),
-        updateParam.getImage());
+    UpdateUserCommand command = new UpdateUserCommand(existingUser, updateParam);
+
+    userService.updateUser(command);
 
     assertEquals("new@example.com", existingUser.getEmail());
     assertEquals("newuser", existingUser.getUsername());
     assertEquals("newpass", existingUser.getPassword());
     assertEquals("new bio", existingUser.getBio());
     assertEquals("new image", existingUser.getImage());
+    verify(userRepository).save(existingUser);
   }
 
   @Test
@@ -90,16 +88,14 @@ public class UserServiceTest {
 
     UpdateUserParam updateParam = UpdateUserParam.builder().bio("updated bio only").build();
 
-    existingUser.update(
-        updateParam.getEmail(),
-        updateParam.getUsername(),
-        updateParam.getPassword(),
-        updateParam.getBio(),
-        updateParam.getImage());
+    UpdateUserCommand command = new UpdateUserCommand(existingUser, updateParam);
+
+    userService.updateUser(command);
 
     assertEquals("keep@example.com", existingUser.getEmail());
     assertEquals("keepuser", existingUser.getUsername());
     assertEquals("updated bio only", existingUser.getBio());
+    verify(userRepository).save(existingUser);
   }
 
   @Test
