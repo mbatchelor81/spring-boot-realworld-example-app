@@ -122,6 +122,62 @@ Use spotless for code format.
 
     ./gradlew spotlessJavaApply
 
+# Microservices Migration
+
+This repository is being migrated from a monolith to a microservices architecture. The new service modules live under `services/` and are defined as Gradle subprojects in `settings.gradle`.
+
+## Bounded Contexts
+
+| Service | Gradle Path | Package | Port |
+|---------|-------------|---------|------|
+| Consumer | `:services:ftgo-consumer-service` | `com.ftgo.consumer` | 8081 |
+| Restaurant | `:services:ftgo-restaurant-service` | `com.ftgo.restaurant` | 8082 |
+| Order | `:services:ftgo-order-service` | `com.ftgo.order` | 8083 |
+| Courier | `:services:ftgo-courier-service` | `com.ftgo.courier` | 8084 |
+
+## Shared Libraries
+
+| Module | Purpose |
+|--------|---------|
+| `ftgo-common` | Value objects, utilities, base classes |
+| `ftgo-common-jpa` | JPA base entities, converters |
+
+## Service Directory Layout
+
+Each service follows a standard structure:
+
+```
+services/ftgo-<context>-service/
+├── build.gradle
+├── docker/Dockerfile
+├── k8s/
+│   ├── deployment.yaml
+│   └── service.yaml
+└── src/
+    ├── main/
+    │   ├── java/com/ftgo/<context>/
+    │   │   ├── <Context>ServiceApplication.java
+    │   │   ├── api/
+    │   │   ├── domain/
+    │   │   └── infrastructure/
+    │   └── resources/
+    │       ├── application.yml
+    │       └── db/migration/
+    └── test/java/com/ftgo/<context>/
+```
+
+## Building a Service
+
+```bash
+# Build a single service
+./gradlew :services:ftgo-consumer-service:build
+
+# Build all services
+./gradlew build
+```
+
+For the full architecture decision, see [ADR-001](docs/adr/001-microservices-repo-structure.md).
+
 # Help
 
 Please fork and PR to improve the project.

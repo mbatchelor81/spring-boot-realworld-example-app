@@ -1,0 +1,30 @@
+pluginManagement {
+    plugins {
+        id 'org.springframework.boot' version '2.6.3'
+        id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    }
+}
+
+rootProject.name = 'spring-boot-realworld-example-app'
+
+// ---------------------------------------------------------------------------
+// Shared libraries
+// ---------------------------------------------------------------------------
+include 'services:ftgo-common'
+include 'services:ftgo-common-jpa'
+
+// ---------------------------------------------------------------------------
+// Service API modules (events, commands — consumed by other services)
+// ---------------------------------------------------------------------------
+include 'services:ftgo-consumer-service-api'
+include 'services:ftgo-restaurant-service-api'
+include 'services:ftgo-order-service-api'
+include 'services:ftgo-courier-service-api'
+
+// ---------------------------------------------------------------------------
+// Service implementation modules (Spring Boot applications)
+// ---------------------------------------------------------------------------
+include 'services:ftgo-consumer-service'
+include 'services:ftgo-restaurant-service'
+include 'services:ftgo-order-service'
+include 'services:ftgo-courier-service'

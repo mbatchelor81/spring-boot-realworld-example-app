@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftgo-restaurant-service
+  labels:
+    app: ftgo-restaurant-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ftgo-restaurant-service
+  template:
+    metadata:
+      labels:
+        app: ftgo-restaurant-service
+    spec:
+      containers:
+        - name: ftgo-restaurant-service
+          image: ftgo/restaurant-service:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "k8s"
+            - name: SERVER_PORT
+              value: "8080"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
