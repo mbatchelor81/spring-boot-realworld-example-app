@@ -1,22 +1,24 @@
 package io.spring.infrastructure.service;
 
+import io.jsonwebtoken.Jwts;
 import io.spring.core.service.JwtService;
 import io.spring.core.user.User;
+import java.util.Date;
 import java.util.Optional;
+import javax.crypto.spec.SecretKeySpec;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class DefaultJwtServiceTest {
 
+  private static final String TEST_SECRET =
+      "1231231231231231231231231231231231231231231231231231231231231231231231231231231231231231";
   private JwtService jwtService;
 
   @BeforeEach
   public void setUp() {
-    jwtService =
-        new DefaultJwtService(
-            "1231231231231231231231231231231231231231231231231231231231231231231231231231231231231231",
-            3600);
+    jwtService = new DefaultJwtService(TEST_SECRET, 3600);
   }
 
   @Test
@@ -37,8 +39,13 @@ public class DefaultJwtServiceTest {
 
   @Test
   public void should_get_null_with_expired_jwt() {
+    SecretKeySpec key = new SecretKeySpec(TEST_SECRET.getBytes(), "HmacSHA512");
     String token =
-        "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhaXNlbnNpeSIsImV4cCI6MTUwMjE2MTIwNH0.SJB-U60WzxLYNomqLo4G3v3LzFxJKuVrIud8D8Lz3-mgpo9pN1i7C8ikU_jQPJGm8HsC1CquGMI-rSuM7j6LDA";
+        Jwts.builder()
+            .subject("testuser")
+            .expiration(new Date(System.currentTimeMillis() - 1000))
+            .signWith(key, Jwts.SIG.HS512)
+            .compact();
     Assertions.assertFalse(jwtService.getSubFromToken(token).isPresent());
   }
 }
