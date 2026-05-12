@@ -1,0 +1,112 @@
+# ---------------------------------------------------------------------------
+# Gradle Version Catalog — FTGO Microservices
+# ---------------------------------------------------------------------------
+# This catalog centralizes dependency versions for ALL microservices.
+# The existing monolith (root build.gradle) does NOT use this catalog;
+# it keeps its own Spring Boot 2.6.3 / Java 11 dependency declarations.
+#
+# Microservices consume these versions through convention plugins
+# located in gradle/plugins/.
+# ---------------------------------------------------------------------------
+
+[versions]
+# --- Platform ---
+spring-boot         = "3.2.5"
+spring-dependency   = "1.1.4"
+micrometer          = "1.12.5"
+
+# --- Persistence ---
+flyway              = "9.22.3"
+h2                  = "2.2.224"
+sqlite              = "3.45.2.0"
+
+# --- Serialization ---
+jackson-bom         = "2.16.2"
+
+# --- Security / JWT ---
+jjwt                = "0.12.5"
+
+# --- Utilities ---
+lombok              = "1.18.32"
+
+# --- Testing ---
+junit-bom           = "5.10.2"
+rest-assured        = "5.4.0"
+mockito             = "5.11.0"
+assertj             = "3.25.3"
+testcontainers      = "1.19.7"
+
+# --- Build plugins ---
+spotless             = "6.25.0"
+dgs-codegen          = "6.1.0"
+
+[libraries]
+# Spring Boot starters
+spring-boot-starter-web          = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-boot-starter-validation   = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-boot-starter-data-jpa     = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-starter-security     = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-boot-starter-actuator     = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-boot-starter-hateoas      = { module = "org.springframework.boot:spring-boot-starter-hateoas" }
+spring-boot-starter-test         = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-security-test             = { module = "org.springframework.security:spring-security-test" }
+
+# Micrometer (observability)
+micrometer-core                  = { module = "io.micrometer:micrometer-core",                    version.ref = "micrometer" }
+micrometer-registry-prometheus   = { module = "io.micrometer:micrometer-registry-prometheus",     version.ref = "micrometer" }
+micrometer-tracing-bridge-brave  = { module = "io.micrometer:micrometer-tracing-bridge-brave",    version.ref = "micrometer" }
+
+# Persistence
+flyway-core                      = { module = "org.flywaydb:flyway-core",                        version.ref = "flyway" }
+h2                               = { module = "com.h2database:h2",                               version.ref = "h2" }
+sqlite-jdbc                      = { module = "org.xerial:sqlite-jdbc",                           version.ref = "sqlite" }
+
+# Jackson
+jackson-bom                      = { module = "com.fasterxml.jackson:jackson-bom",                version.ref = "jackson-bom" }
+
+# JWT
+jjwt-api                         = { module = "io.jsonwebtoken:jjwt-api",                        version.ref = "jjwt" }
+jjwt-impl                        = { module = "io.jsonwebtoken:jjwt-impl",                       version.ref = "jjwt" }
+jjwt-jackson                     = { module = "io.jsonwebtoken:jjwt-jackson",                    version.ref = "jjwt" }
+
+# Lombok
+lombok                           = { module = "org.projectlombok:lombok",                        version.ref = "lombok" }
+
+# Testing
+junit-bom                        = { module = "org.junit:junit-bom",                             version.ref = "junit-bom" }
+rest-assured                     = { module = "io.rest-assured:rest-assured",                     version.ref = "rest-assured" }
+rest-assured-json-path           = { module = "io.rest-assured:json-path",                        version.ref = "rest-assured" }
+rest-assured-xml-path            = { module = "io.rest-assured:xml-path",                         version.ref = "rest-assured" }
+rest-assured-spring-mock-mvc     = { module = "io.rest-assured:spring-mock-mvc",                  version.ref = "rest-assured" }
+mockito-core                     = { module = "org.mockito:mockito-core",                         version.ref = "mockito" }
+mockito-junit-jupiter            = { module = "org.mockito:mockito-junit-jupiter",                version.ref = "mockito" }
+assertj-core                     = { module = "org.assertj:assertj-core",                        version.ref = "assertj" }
+testcontainers-bom               = { module = "org.testcontainers:testcontainers-bom",            version.ref = "testcontainers" }
+
+[bundles]
+spring-boot-service = [
+    "spring-boot-starter-web",
+    "spring-boot-starter-validation",
+    "spring-boot-starter-data-jpa",
+    "spring-boot-starter-actuator",
+]
+
+jwt = ["jjwt-api", "jjwt-impl", "jjwt-jackson"]
+
+rest-assured = [
+    "rest-assured",
+    "rest-assured-json-path",
+    "rest-assured-xml-path",
+    "rest-assured-spring-mock-mvc",
+]
+
+micrometer = [
+    "micrometer-core",
+    "micrometer-registry-prometheus",
+]
+
+[plugins]
+spring-boot          = { id = "org.springframework.boot",          version.ref = "spring-boot" }
+spring-dependency    = { id = "io.spring.dependency-management",   version.ref = "spring-dependency" }
+spotless             = { id = "com.diffplug.spotless",             version.ref = "spotless" }
+dgs-codegen          = { id = "com.netflix.dgs.codegen",           version.ref = "dgs-codegen" }

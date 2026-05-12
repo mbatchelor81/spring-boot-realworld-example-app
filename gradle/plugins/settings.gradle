@@ -1,0 +1,9 @@
+rootProject.name = 'ftgo-gradle-plugins'
+
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs {
+            from(files('../libs.versions.toml'))
+        }
+    }
+}
