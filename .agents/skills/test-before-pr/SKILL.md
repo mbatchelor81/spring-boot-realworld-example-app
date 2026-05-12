@@ -93,6 +93,13 @@ JaCoCo is configured with an **80 % minimum line-coverage** rule.
 2. Review `build/reports/jacoco/test/html/index.html` to identify any
    newly-added code that is not covered.
 
+> **Note:** The 80 % threshold is configured in `build.gradle`, but the
+> codebase currently sits at ~33 % instruction coverage. CI deliberately
+> skips this check (`-x jacocoTestCoverageVerification`), so this phase is
+> **aspirational** — it will fail until coverage is improved. Use it to
+> monitor the direction of your changes (coverage should not decrease) rather
+> than as a hard gate.
+
 > **Tip:** If you are only adding non-Java files (docs, config, skills), you
 > can skip this phase because coverage will not change.
 
