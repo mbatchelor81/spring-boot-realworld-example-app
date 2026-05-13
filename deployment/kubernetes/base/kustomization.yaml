@@ -1,0 +1,57 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: ftgo-platform
+      app.kubernetes.io/managed-by: kustomize
+    includeSelectors: false
+
+resources:
+  # Shared secrets
+  - common/db-sealed-secret.yaml
+  # MySQL
+  - mysql/deployment.yaml
+  - mysql/service.yaml
+  - mysql/configmap.yaml
+  - mysql/sealed-secret.yaml
+  - mysql/pvc.yaml
+  # Keycloak
+  - keycloak/deployment.yaml
+  - keycloak/service.yaml
+  - keycloak/configmap.yaml
+  - keycloak/sealed-secret.yaml
+  # Microservices
+  - ftgo-consumer-service/deployment.yaml
+  - ftgo-consumer-service/service.yaml
+  - ftgo-consumer-service/configmap.yaml
+  - ftgo-consumer-service/hpa.yaml
+  - ftgo-restaurant-service/deployment.yaml
+  - ftgo-restaurant-service/service.yaml
+  - ftgo-restaurant-service/configmap.yaml
+  - ftgo-restaurant-service/hpa.yaml
+  - ftgo-order-service/deployment.yaml
+  - ftgo-order-service/service.yaml
+  - ftgo-order-service/configmap.yaml
+  - ftgo-order-service/hpa.yaml
+  - ftgo-courier-service/deployment.yaml
+  - ftgo-courier-service/service.yaml
+  - ftgo-courier-service/configmap.yaml
+  - ftgo-courier-service/hpa.yaml
+  # API Gateway
+  - ftgo-api-gateway/deployment.yaml
+  - ftgo-api-gateway/service.yaml
+  - ftgo-api-gateway/configmap.yaml
+  - ftgo-api-gateway/hpa.yaml
+  # Networking
+  - ingress/ingress.yaml
+
+configMapGenerator:
+  - name: keycloak-realm
+    files:
+      - ftgo-realm.json=keycloak/ftgo-realm.json
+    options:
+      disableNameSuffixHash: true
+      labels:
+        app.kubernetes.io/name: keycloak
+        app.kubernetes.io/component: identity

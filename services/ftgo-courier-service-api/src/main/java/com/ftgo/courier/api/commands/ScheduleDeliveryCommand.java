@@ -2,14 +2,21 @@ package com.ftgo.courier.api.commands;
 
 import com.ftgo.common.Address;
 import java.time.LocalDateTime;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 
 public class ScheduleDeliveryCommand {
 
-  private final long orderId;
-  private final long courierId;
-  private final Address pickupAddress;
-  private final Address deliveryAddress;
-  private final LocalDateTime deliveryTime;
+  @Positive private final long orderId;
+
+  @Positive private final long courierId;
+
+  @NotNull @Valid private final Address pickupAddress;
+
+  @NotNull @Valid private final Address deliveryAddress;
+
+  @NotNull private final LocalDateTime deliveryTime;
 
   public ScheduleDeliveryCommand(
       long orderId,
