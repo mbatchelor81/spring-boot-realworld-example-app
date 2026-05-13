@@ -2,6 +2,16 @@
 
 [![Actions](https://github.com/gothinkster/spring-boot-realworld-example-app/workflows/Java%20CI/badge.svg)](https://github.com/gothinkster/spring-boot-realworld-example-app/actions)
 
+### Microservice Build Status
+
+| Service | Status |
+|---------|--------|
+| Common Libraries | [![CI — Common Libraries](https://github.com/mbatchelor81/spring-boot-realworld-example-app/actions/workflows/ci-common-libs.yml/badge.svg?branch=feat%2Fmicroservices-migration)](https://github.com/mbatchelor81/spring-boot-realworld-example-app/actions/workflows/ci-common-libs.yml) |
+| Consumer Service | [![CI — Consumer Service](https://github.com/mbatchelor81/spring-boot-realworld-example-app/actions/workflows/ci-consumer-service.yml/badge.svg?branch=feat%2Fmicroservices-migration)](https://github.com/mbatchelor81/spring-boot-realworld-example-app/actions/workflows/ci-consumer-service.yml) |
+| Restaurant Service | [![CI — Restaurant Service](https://github.com/mbatchelor81/spring-boot-realworld-example-app/actions/workflows/ci-restaurant-service.yml/badge.svg?branch=feat%2Fmicroservices-migration)](https://github.com/mbatchelor81/spring-boot-realworld-example-app/actions/workflows/ci-restaurant-service.yml) |
+| Order Service | [![CI — Order Service](https://github.com/mbatchelor81/spring-boot-realworld-example-app/actions/workflows/ci-order-service.yml/badge.svg?branch=feat%2Fmicroservices-migration)](https://github.com/mbatchelor81/spring-boot-realworld-example-app/actions/workflows/ci-order-service.yml) |
+| Courier Service | [![CI — Courier Service](https://github.com/mbatchelor81/spring-boot-realworld-example-app/actions/workflows/ci-courier-service.yml/badge.svg?branch=feat%2Fmicroservices-migration)](https://github.com/mbatchelor81/spring-boot-realworld-example-app/actions/workflows/ci-courier-service.yml) |
+
 > ### Spring boot + MyBatis codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld-example-apps) spec and API.
 
 This codebase was created to demonstrate a fully fledged full-stack application built with Spring boot + Mybatis including CRUD operations, authentication, routing, pagination, and more.

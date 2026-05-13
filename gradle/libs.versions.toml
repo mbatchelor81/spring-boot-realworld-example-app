@@ -26,6 +26,9 @@ jackson-bom         = "2.16.2"
 # --- Security / JWT ---
 jjwt                = "0.12.5"
 
+# --- API Documentation ---
+springdoc           = "2.5.0"
+
 # --- Utilities ---
 lombok              = "1.18.32"
 
@@ -69,6 +72,10 @@ jjwt-api                         = { module = "io.jsonwebtoken:jjwt-api",       
 jjwt-impl                        = { module = "io.jsonwebtoken:jjwt-impl",                       version.ref = "jjwt" }
 jjwt-jackson                     = { module = "io.jsonwebtoken:jjwt-jackson",                    version.ref = "jjwt" }
 
+# API Documentation (SpringDoc OpenAPI 3)
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+springdoc-openapi-starter-common   = { module = "org.springdoc:springdoc-openapi-starter-common",    version.ref = "springdoc" }
+
 # Lombok
 lombok                           = { module = "org.projectlombok:lombok",                        version.ref = "lombok" }
 
@@ -89,6 +96,7 @@ spring-boot-service = [
     "spring-boot-starter-validation",
     "spring-boot-starter-data-jpa",
     "spring-boot-starter-actuator",
+    "spring-boot-starter-security",
 ]
 
 jwt = ["jjwt-api", "jjwt-impl", "jjwt-jackson"]

@@ -1,0 +1,76 @@
+name: CI — Common Libraries
+
+on:
+  push:
+    branches: [main, feat/microservices-migration]
+    paths:
+      - 'services/ftgo-common/**'
+      - 'services/ftgo-common-jpa/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/ci-common-libs.yml'
+  pull_request:
+    branches: [main, feat/microservices-migration]
+    paths:
+      - 'services/ftgo-common/**'
+      - 'services/ftgo-common-jpa/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/ci-common-libs.yml'
+
+jobs:
+  build:
+    name: Build & Test — Common Libraries
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build & Test ftgo-common
+        run: |
+          ./gradlew \
+            :services:ftgo-common:clean \
+            :services:ftgo-common:build \
+            -x jacocoTestCoverageVerification \
+            -x spotlessCheck
+
+      - name: Build ftgo-common-jpa
+        run: |
+          ./gradlew \
+            :services:ftgo-common-jpa:clean \
+            :services:ftgo-common-jpa:build \
+            -x jacocoTestCoverageVerification \
+            -x spotlessCheck
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-common-libs
+          path: |
+            services/ftgo-common/build/reports/test/
+            services/ftgo-common/build/test-results/
+            services/ftgo-common-jpa/build/reports/test/
+            services/ftgo-common-jpa/build/test-results/
+          retention-days: 14
