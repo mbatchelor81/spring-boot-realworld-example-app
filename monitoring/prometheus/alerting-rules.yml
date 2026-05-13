@@ -1,0 +1,85 @@
+groups:
+  - name: service_health
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been unreachable for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (job)
+            /
+            sum(rate(http_server_requests_seconds_count[5m])) by (job)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "{{ $labels.job }} has a 5xx error rate above 5% for the last 5 minutes."
+
+      - alert: HighResponseLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_server_requests_seconds_bucket[5m])) by (job, le)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p95 latency on {{ $labels.job }}"
+          description: "{{ $labels.job }} p95 response time is above 2 seconds."
+
+  - name: jvm_health
+    rules:
+      - alert: HighJvmMemoryUsage
+        expr: |
+          (jvm_memory_used_bytes{area="heap"}
+           / jvm_memory_max_bytes{area="heap"}) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High heap memory usage on {{ $labels.job }}"
+          description: "{{ $labels.job }} heap usage is above 85% for 5 minutes."
+
+      - alert: HighGcPause
+        expr: |
+          rate(jvm_gc_pause_seconds_sum[5m])
+          / rate(jvm_gc_pause_seconds_count[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High GC pause on {{ $labels.job }}"
+          description: "{{ $labels.job }} average GC pause exceeds 500ms."
+
+  - name: business_metrics
+    rules:
+      - alert: HighOrderFailureRate
+        expr: |
+          (
+            rate(ftgo_orders_failed_total[5m])
+            / rate(ftgo_orders_created_total[5m])
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High order failure rate"
+          description: "More than 10% of orders are failing over the last 5 minutes."
+
+      - alert: NoOrdersCreated
+        expr: rate(ftgo_orders_created_total[15m]) == 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No orders created in 15 minutes"
+          description: "The order service has not processed any new orders for 15 minutes."

@@ -10,18 +10,36 @@ spring:
   flyway:
     enabled: true
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics
-
 ftgo:
+  security:
+    public-paths:
+      - /actuator/health
+      - /actuator/info
+    cors:
+      allowed-origins:
+        - "*"
   openapi:
     title: Order Service API
     description: Manages order creation, lifecycle, and revisions
     version: 1.0.0
     server-url: http://localhost:8083
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
 
 springdoc:
   swagger-ui:

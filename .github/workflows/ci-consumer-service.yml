@@ -1,0 +1,34 @@
+name: CI — Consumer Service
+
+on:
+  push:
+    branches: [main, feat/microservices-migration]
+    paths:
+      - 'services/ftgo-consumer-service/**'
+      - 'services/ftgo-consumer-service-api/**'
+      - 'services/ftgo-common/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/ci-consumer-service.yml'
+      - '.github/workflows/_reusable-service-build.yml'
+  pull_request:
+    branches: [main, feat/microservices-migration]
+    paths:
+      - 'services/ftgo-consumer-service/**'
+      - 'services/ftgo-consumer-service-api/**'
+      - 'services/ftgo-common/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/ci-consumer-service.yml'
+      - '.github/workflows/_reusable-service-build.yml'
+
+jobs:
+  build:
+    uses: ./.github/workflows/_reusable-service-build.yml
+    with:
+      service-path: ':services:ftgo-consumer-service'
+      service-name: ftgo-consumer-service

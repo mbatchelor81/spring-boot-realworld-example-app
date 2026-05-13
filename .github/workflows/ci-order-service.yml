@@ -1,0 +1,38 @@
+name: CI — Order Service
+
+on:
+  push:
+    branches: [main, feat/microservices-migration]
+    paths:
+      - 'services/ftgo-order-service/**'
+      - 'services/ftgo-order-service-api/**'
+      - 'services/ftgo-consumer-service-api/**'
+      - 'services/ftgo-restaurant-service-api/**'
+      - 'services/ftgo-common/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/ci-order-service.yml'
+      - '.github/workflows/_reusable-service-build.yml'
+  pull_request:
+    branches: [main, feat/microservices-migration]
+    paths:
+      - 'services/ftgo-order-service/**'
+      - 'services/ftgo-order-service-api/**'
+      - 'services/ftgo-consumer-service-api/**'
+      - 'services/ftgo-restaurant-service-api/**'
+      - 'services/ftgo-common/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/ci-order-service.yml'
+      - '.github/workflows/_reusable-service-build.yml'
+
+jobs:
+  build:
+    uses: ./.github/workflows/_reusable-service-build.yml
+    with:
+      service-path: ':services:ftgo-order-service'
+      service-name: ftgo-order-service
