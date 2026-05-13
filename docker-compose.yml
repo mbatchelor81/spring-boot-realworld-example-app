@@ -123,4 +123,3 @@ services:
 volumes:
   prometheus-data:
   grafana-data:
-  zipkin-data:

@@ -2,6 +2,7 @@ package com.ftgo.tracing;
 
 import brave.Span;
 import brave.Tracing;
+import brave.propagation.Propagation;
 import brave.propagation.TraceContextOrSamplingFlags;
 import java.io.IOException;
 import javax.servlet.Filter;
@@ -11,20 +12,17 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 
-@Component
-@Order(Ordered.HIGHEST_PRECEDENCE + 5)
 public class TracingServletFilter implements Filter {
 
-  private final Tracing tracing;
   private final brave.Tracer tracer;
+  private final Propagation.Getter<HttpServletRequest, String> getter =
+      (carrier, key) -> carrier.getHeader(key);
+  private final Propagation<String> propagation;
 
   public TracingServletFilter(Tracing tracing) {
-    this.tracing = tracing;
     this.tracer = tracing.tracer();
+    this.propagation = tracing.propagation();
   }
 
   @Override
@@ -38,12 +36,7 @@ public class TracingServletFilter implements Filter {
     HttpServletRequest httpRequest = (HttpServletRequest) request;
     HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-    TraceContextOrSamplingFlags extracted =
-        tracing
-            .propagation()
-            .extractor(
-                (carrier, key) -> ((HttpServletRequest) carrier).getHeader(key))
-            .extract(httpRequest);
+    TraceContextOrSamplingFlags extracted = propagation.extractor(getter).extract(httpRequest);
 
     Span span = tracer.nextSpan(extracted);
     span.name(httpRequest.getMethod() + " " + httpRequest.getRequestURI());
