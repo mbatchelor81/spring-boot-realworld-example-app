@@ -16,5 +16,19 @@ spec:
               value: edge
             - name: KC_HTTP_ENABLED
               value: "true"
+            - name: KC_DB
+              value: mysql
+            - name: KC_DB_URL
+              value: jdbc:mysql://ftgo-mysql:3306/keycloak
+            - name: KC_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-db-credentials
+                  key: DB_USERNAME
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-db-credentials
+                  key: DB_PASSWORD
           volumeMounts: []
       volumes: []

@@ -12,6 +12,7 @@ resources:
   - ../../base
   - namespace.yaml
   - pdb.yaml
+  - keycloak-db-sealed-secret.yaml
 
 patches:
   - path: patches/replicas.yaml
