@@ -20,6 +20,7 @@ dependencies {
     implementation project(':services:ftgo-courier-service-api')
     implementation project(':services:ftgo-security-lib')
     implementation project(':services:ftgo-tracing-lib')
+    implementation project(':services:ftgo-error-handling-lib')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'

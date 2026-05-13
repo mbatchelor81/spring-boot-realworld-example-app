@@ -2,13 +2,20 @@ package com.ftgo.order.api.commands;
 
 import com.ftgo.common.Address;
 import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 
 public class CreateOrderCommand {
 
-  private final long consumerId;
-  private final long restaurantId;
-  private final Address deliveryAddress;
-  private final List<OrderLineItemDto> lineItems;
+  @Positive private final long consumerId;
+
+  @Positive private final long restaurantId;
+
+  @NotNull @Valid private final Address deliveryAddress;
+
+  @NotEmpty @Valid private final List<OrderLineItemDto> lineItems;
 
   public CreateOrderCommand(
       long consumerId,

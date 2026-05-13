@@ -3,16 +3,17 @@ package com.ftgo.common;
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Embeddable;
+import javax.validation.constraints.NotBlank;
 
 @Embeddable
 @Access(AccessType.FIELD)
 public class Address {
 
-  private String street1;
+  @NotBlank private String street1;
   private String street2;
-  private String city;
-  private String state;
-  private String zip;
+  @NotBlank private String city;
+  @NotBlank private String state;
+  @NotBlank private String zip;
 
   public Address() {}
 
