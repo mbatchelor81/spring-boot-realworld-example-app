@@ -69,7 +69,8 @@ public class FtgoSecurityAutoConfiguration {
 
     CorsConfiguration configuration = new CorsConfiguration();
     List<String> origins = corsProps.getAllowedOrigins();
-    if (origins.contains("*")) {
+    boolean hasWildcard = origins.stream().anyMatch(o -> o.contains("*"));
+    if (hasWildcard) {
       configuration.setAllowedOriginPatterns(origins);
     } else {
       configuration.setAllowedOrigins(origins);
