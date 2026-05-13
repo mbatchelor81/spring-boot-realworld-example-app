@@ -32,6 +32,9 @@ jjwt                = "0.12.5"
 # --- API Documentation ---
 springdoc           = "2.5.0"
 
+# --- Resilience ---
+resilience4j        = "1.7.1"
+
 # --- Utilities ---
 lombok              = "1.18.32"
 
@@ -93,6 +96,14 @@ jjwt-jackson                     = { module = "io.jsonwebtoken:jjwt-jackson",   
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 springdoc-openapi-starter-common   = { module = "org.springdoc:springdoc-openapi-starter-common",    version.ref = "springdoc" }
 
+# Resilience4j
+resilience4j-spring-boot2        = { module = "io.github.resilience4j:resilience4j-spring-boot2",   version.ref = "resilience4j" }
+resilience4j-circuitbreaker       = { module = "io.github.resilience4j:resilience4j-circuitbreaker",  version.ref = "resilience4j" }
+resilience4j-retry               = { module = "io.github.resilience4j:resilience4j-retry",            version.ref = "resilience4j" }
+resilience4j-bulkhead            = { module = "io.github.resilience4j:resilience4j-bulkhead",         version.ref = "resilience4j" }
+resilience4j-ratelimiter         = { module = "io.github.resilience4j:resilience4j-ratelimiter",      version.ref = "resilience4j" }
+resilience4j-micrometer          = { module = "io.github.resilience4j:resilience4j-micrometer",       version.ref = "resilience4j" }
+
 # Lombok
 lombok                           = { module = "org.projectlombok:lombok",                        version.ref = "lombok" }
 
@@ -136,6 +147,15 @@ tracing = [
     "zipkin-sender-urlconnection",
     "brave-context-slf4j",
     "brave-instrumentation-http",
+]
+
+resilience4j = [
+    "resilience4j-spring-boot2",
+    "resilience4j-circuitbreaker",
+    "resilience4j-retry",
+    "resilience4j-bulkhead",
+    "resilience4j-ratelimiter",
+    "resilience4j-micrometer",
 ]
 
 [plugins]

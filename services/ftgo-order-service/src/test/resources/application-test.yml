@@ -1,0 +1,75 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:ftgo_order_test_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+
+ftgo:
+  security:
+    public-paths:
+      - /actuator/**
+      - /api/**
+  service-discovery:
+    consumer-service-url: http://localhost:18081
+    restaurant-service-url: http://localhost:18082
+
+management:
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState,diskSpace
+        readiness:
+          include: readinessState,db,diskSpace
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        wait-duration-in-open-state: 5s
+        failure-rate-threshold: 50
+    instances:
+      consumerService:
+        base-config: default
+      restaurantService:
+        base-config: default
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 100ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+    instances:
+      consumerService:
+        base-config: default
+      restaurantService:
+        base-config: default
+  bulkhead:
+    configs:
+      default:
+        max-concurrent-calls: 25
+        max-wait-duration: 0ms
+    instances:
+      consumerService:
+        base-config: default
+      restaurantService:
+        base-config: default
