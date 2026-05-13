@@ -20,7 +20,6 @@ public class RequestLoggingFilter implements GlobalFilter, Ordered {
   @Override
   public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
     ServerHttpRequest request = exchange.getRequest();
-    String correlationId = request.getHeaders().getFirst(CORRELATION_ID_HEADER);
     String method = request.getMethodValue();
     String path = request.getURI().getPath();
     String clientIp =
@@ -30,27 +29,23 @@ public class RequestLoggingFilter implements GlobalFilter, Ordered {
 
     long startTime = System.currentTimeMillis();
 
-    log.info(
-        "Incoming request: method={} path={} clientIp={} correlationId={}",
-        method,
-        path,
-        clientIp,
-        correlationId);
-
     return chain
         .filter(exchange)
         .then(
             Mono.fromRunnable(
                 () -> {
+                  String correlationId =
+                      exchange.getRequest().getHeaders().getFirst(CORRELATION_ID_HEADER);
                   ServerHttpResponse response = exchange.getResponse();
                   long duration = System.currentTimeMillis() - startTime;
                   log.info(
-                      "Outgoing response: method={} path={} status={} duration={}ms"
+                      "Request: method={} path={} status={} duration={}ms clientIp={}"
                           + " correlationId={}",
                       method,
                       path,
                       response.getStatusCode(),
                       duration,
+                      clientIp,
                       correlationId);
                 }));
   }

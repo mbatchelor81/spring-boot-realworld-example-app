@@ -36,7 +36,7 @@ spring:
           predicates:
             - Path=/api/consumers/**,/api/v1/consumers/**
           filters:
-            - StripPrefix=1
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
             - name: CircuitBreaker
               args:
                 name: consumerServiceCB
@@ -62,7 +62,7 @@ spring:
           predicates:
             - Path=/api/restaurants/**,/api/v1/restaurants/**
           filters:
-            - StripPrefix=1
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
             - name: CircuitBreaker
               args:
                 name: restaurantServiceCB
@@ -88,7 +88,7 @@ spring:
           predicates:
             - Path=/api/orders/**,/api/v1/orders/**
           filters:
-            - StripPrefix=1
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
             - name: CircuitBreaker
               args:
                 name: orderServiceCB
@@ -114,7 +114,7 @@ spring:
           predicates:
             - Path=/api/couriers/**,/api/v1/couriers/**
           filters:
-            - StripPrefix=1
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
             - name: CircuitBreaker
               args:
                 name: courierServiceCB
@@ -245,7 +245,7 @@ spring:
           predicates:
             - Path=/api/consumers/**,/api/v1/consumers/**
           filters:
-            - StripPrefix=1
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
             - name: CircuitBreaker
               args:
                 name: consumerServiceCB
@@ -255,12 +255,21 @@ spring:
                 redis-rate-limiter.replenishRate: 20
                 redis-rate-limiter.burstCapacity: 40
                 redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
         - id: restaurant-service
           uri: http://ftgo-restaurant-service:8082
           predicates:
             - Path=/api/restaurants/**,/api/v1/restaurants/**
           filters:
-            - StripPrefix=1
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
             - name: CircuitBreaker
               args:
                 name: restaurantServiceCB
@@ -270,12 +279,21 @@ spring:
                 redis-rate-limiter.replenishRate: 20
                 redis-rate-limiter.burstCapacity: 40
                 redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
         - id: order-service
           uri: http://ftgo-order-service:8083
           predicates:
             - Path=/api/orders/**,/api/v1/orders/**
           filters:
-            - StripPrefix=1
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
             - name: CircuitBreaker
               args:
                 name: orderServiceCB
@@ -285,12 +303,21 @@ spring:
                 redis-rate-limiter.replenishRate: 20
                 redis-rate-limiter.burstCapacity: 40
                 redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
         - id: courier-service
           uri: http://ftgo-courier-service:8084
           predicates:
             - Path=/api/couriers/**,/api/v1/couriers/**
           filters:
-            - StripPrefix=1
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
             - name: CircuitBreaker
               args:
                 name: courierServiceCB
@@ -300,6 +327,15 @@ spring:
                 redis-rate-limiter.replenishRate: 20
                 redis-rate-limiter.burstCapacity: 40
                 redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
   security:
     oauth2:
       resourceserver:
@@ -323,7 +359,7 @@ spring:
           predicates:
             - Path=/api/consumers/**,/api/v1/consumers/**
           filters:
-            - StripPrefix=1
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
             - name: CircuitBreaker
               args:
                 name: consumerServiceCB
@@ -333,12 +369,21 @@ spring:
                 redis-rate-limiter.replenishRate: 20
                 redis-rate-limiter.burstCapacity: 40
                 redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
         - id: restaurant-service
           uri: http://ftgo-restaurant-service:8082
           predicates:
             - Path=/api/restaurants/**,/api/v1/restaurants/**
           filters:
-            - StripPrefix=1
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
             - name: CircuitBreaker
               args:
                 name: restaurantServiceCB
@@ -348,12 +393,21 @@ spring:
                 redis-rate-limiter.replenishRate: 20
                 redis-rate-limiter.burstCapacity: 40
                 redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
         - id: order-service
           uri: http://ftgo-order-service:8083
           predicates:
             - Path=/api/orders/**,/api/v1/orders/**
           filters:
-            - StripPrefix=1
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
             - name: CircuitBreaker
               args:
                 name: orderServiceCB
@@ -363,12 +417,21 @@ spring:
                 redis-rate-limiter.replenishRate: 20
                 redis-rate-limiter.burstCapacity: 40
                 redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
         - id: courier-service
           uri: http://ftgo-courier-service:8084
           predicates:
             - Path=/api/couriers/**,/api/v1/couriers/**
           filters:
-            - StripPrefix=1
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
             - name: CircuitBreaker
               args:
                 name: courierServiceCB
@@ -378,3 +441,12 @@ spring:
                 redis-rate-limiter.replenishRate: 20
                 redis-rate-limiter.burstCapacity: 40
                 redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2

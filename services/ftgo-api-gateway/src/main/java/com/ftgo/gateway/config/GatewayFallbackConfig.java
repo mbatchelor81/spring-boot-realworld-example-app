@@ -15,8 +15,8 @@ public class GatewayFallbackConfig {
   @Bean
   public RouterFunction<ServerResponse> fallbackRoute() {
     return RouterFunctions.route()
-        .GET(
-            "/fallback",
+        .route(
+            request -> request.path().equals("/fallback"),
             request ->
                 ServerResponse.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .contentType(MediaType.APPLICATION_JSON)
