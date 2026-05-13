@@ -165,8 +165,8 @@ SELECT order_id, menu_item_id, name, price, quantity FROM ftgo.order_line_items;
 INSERT INTO ftgo_courier_db.courier (id, first_name, last_name, street1, street2, city, state, zip, available)
 SELECT id, first_name, last_name, street1, street2, city, state, zip, available FROM ftgo.courier;
 
-INSERT INTO ftgo_courier_db.courier_actions (courier_id, type, time, order_id)
-SELECT courier_id, type, time, order_id FROM ftgo.courier_actions;
+INSERT INTO ftgo_courier_db.courier_actions (courier_id, type, action_time, order_id)
+SELECT courier_id, type, action_time, order_id FROM ftgo.courier_actions;
 ```
 
 #### Step 3.4: Reset AUTO_INCREMENT Sequences

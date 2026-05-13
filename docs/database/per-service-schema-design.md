@@ -126,7 +126,7 @@ courier
 courier_actions
 ├── courier_id  BIGINT FK → courier(id)
 ├── type        VARCHAR(30) NOT NULL
-├── time        TIMESTAMP
+├── action_time TIMESTAMP
 └── order_id    BIGINT NOT NULL                    ← no FK (cross-service)
 ```
 
