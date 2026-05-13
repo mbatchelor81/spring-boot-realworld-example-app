@@ -11,7 +11,6 @@ plugins {
     id 'pmd'
     id 'com.github.spotbugs'
     id 'jacoco'
-    id 'org.sonarqube'
 }
 
 // ---- Checkstyle -----------------------------------------------------------

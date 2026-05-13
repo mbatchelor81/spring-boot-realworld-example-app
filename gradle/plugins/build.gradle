@@ -12,5 +12,4 @@ dependencies {
     implementation "io.spring.gradle:dependency-management-plugin:${libs.versions.spring.dependency.get()}"
     implementation "com.diffplug.spotless:spotless-plugin-gradle:${libs.versions.spotless.get()}"
     implementation "com.github.spotbugs.snom:spotbugs-gradle-plugin:${libs.versions.spotbugs.plugin.get()}"
-    implementation "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${libs.versions.sonarqube.get()}"
 }
