@@ -18,6 +18,7 @@ patches:
   - path: patches/resources.yaml
   - path: patches/ingress-tls.yaml
   - path: patches/keycloak-prod.yaml
+  - path: patches/configmaps.yaml
 
 images:
   - name: ghcr.io/mbatchelor81/ftgo-consumer-service

@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-consumer-service-config
+data:
+  KEYCLOAK_ISSUER_URI: https://ftgo.example.com/realms/ftgo
+  KEYCLOAK_JWK_SET_URI: https://ftgo.example.com/realms/ftgo/protocol/openid-connect/certs
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-restaurant-service-config
+data:
+  KEYCLOAK_ISSUER_URI: https://ftgo.example.com/realms/ftgo
+  KEYCLOAK_JWK_SET_URI: https://ftgo.example.com/realms/ftgo/protocol/openid-connect/certs
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-order-service-config
+data:
+  KEYCLOAK_ISSUER_URI: https://ftgo.example.com/realms/ftgo
+  KEYCLOAK_JWK_SET_URI: https://ftgo.example.com/realms/ftgo/protocol/openid-connect/certs
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-courier-service-config
+data:
+  KEYCLOAK_ISSUER_URI: https://ftgo.example.com/realms/ftgo
+  KEYCLOAK_JWK_SET_URI: https://ftgo.example.com/realms/ftgo/protocol/openid-connect/certs
