@@ -21,6 +21,7 @@ include 'services:ftgo-domain'
 include 'services:ftgo-security-lib'
 include 'services:ftgo-openapi-lib'
 include 'services:ftgo-tracing-lib'
+include 'services:ftgo-logging-lib'
 include 'services:ftgo-error-handling-lib'
 include 'services:ftgo-test-lib'
 
