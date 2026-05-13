@@ -63,6 +63,8 @@ services:
     depends_on:
       keycloak:
         condition: service_healthy
+      zipkin:
+        condition: service_started
       fluentd:
         condition: service_started
     healthcheck:
@@ -87,6 +89,8 @@ services:
     depends_on:
       keycloak:
         condition: service_healthy
+      zipkin:
+        condition: service_started
       fluentd:
         condition: service_started
     healthcheck:
@@ -111,6 +115,8 @@ services:
     depends_on:
       keycloak:
         condition: service_healthy
+      zipkin:
+        condition: service_started
       fluentd:
         condition: service_started
     healthcheck:
@@ -135,6 +141,8 @@ services:
     depends_on:
       keycloak:
         condition: service_healthy
+      zipkin:
+        condition: service_started
       fluentd:
         condition: service_started
     healthcheck:
