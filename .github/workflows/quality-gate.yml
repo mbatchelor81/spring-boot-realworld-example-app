@@ -154,7 +154,6 @@ jobs:
               -Dsonar.projectKey=mbatchelor81_spring-boot-realworld-example-app \
               -Dsonar.organization=mbatchelor81 \
               -Dsonar.host.url=${SONAR_HOST_URL:-https://sonarcloud.io} \
-              -Dsonar.token=$SONAR_TOKEN \
               -Dsonar.java.coveragePlugin=jacoco \
               -Dsonar.coverage.jacoco.xmlReportPaths=**/build/reports/jacoco/test/jacocoTestReport.xml \
               -Dsonar.java.checkstyle.reportPaths=**/build/reports/checkstyle/main.xml \
