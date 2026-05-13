@@ -13,6 +13,7 @@ public class CourierMetrics {
   private final Counter deliveriesCompleted;
 
   public CourierMetrics(MeterRegistry registry) {
+
     this.couriersCreated =
         Counter.builder("ftgo.couriers.created")
             .description("Total number of couriers created")
@@ -49,4 +50,5 @@ public class CourierMetrics {
   public void incrementDeliveriesCompleted() {
     deliveriesCompleted.increment();
   }
+
 }

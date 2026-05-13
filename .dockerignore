@@ -1,0 +1,50 @@
+# ---------------------------------------------------------------------------
+# .dockerignore — keep Docker build context lean
+# ---------------------------------------------------------------------------
+
+# IDE and OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/
+
+# Monolith source (not needed for microservice images)
+src/
+
+# Frontend (not needed for backend service images)
+frontend/
+node_modules/
+
+# Documentation
+*.md
+LICENSE
+
+# Build outputs (built inside Docker)
+build/
+**/build/
+.gradle/
+**/.gradle/
+
+# Database files
+*.db
+
+# Monitoring config (handled separately in docker-compose)
+monitoring/
+
+# Kubernetes manifests
+**/k8s/
+
+# Test data and Selenium
+selenium/
+
+# Misc
+*.log
+*.tmp
+dev.db

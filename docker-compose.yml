@@ -1,5 +1,21 @@
 version: "3.8"
 
+# ---------------------------------------------------------------------------
+# FTGO Platform — Local Development Compose
+# ---------------------------------------------------------------------------
+# Usage:
+#   docker compose up --build          Build from source and start all services
+#   docker compose up                  Pull pre-built images from GHCR and start
+#   docker compose up ftgo-consumer-service   Start a single service
+# ---------------------------------------------------------------------------
+
+# NOTE: YAML merge (<<:) replaces keys — if a service overrides 'environment',
+# it must re-include SPRING_PROFILES_ACTIVE=docker in its own list.
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  environment:
+    - SPRING_PROFILES_ACTIVE=docker
+
 services:
   # ---------------------------------------------------------------------------
   # Identity Provider (Keycloak)
@@ -26,9 +42,11 @@ services:
   # FTGO Microservices
   # ---------------------------------------------------------------------------
   ftgo-consumer-service:
+    <<: *service-defaults
+    image: ghcr.io/mbatchelor81/ftgo-consumer-service:latest
     build:
-      context: ./services/ftgo-consumer-service
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: services/ftgo-consumer-service/docker/Dockerfile
     ports:
       - "8081:8081"
     environment:
@@ -46,9 +64,11 @@ services:
       retries: 3
 
   ftgo-restaurant-service:
+    <<: *service-defaults
+    image: ghcr.io/mbatchelor81/ftgo-restaurant-service:latest
     build:
-      context: ./services/ftgo-restaurant-service
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: services/ftgo-restaurant-service/docker/Dockerfile
     ports:
       - "8082:8082"
     environment:
@@ -66,9 +86,11 @@ services:
       retries: 3
 
   ftgo-order-service:
+    <<: *service-defaults
+    image: ghcr.io/mbatchelor81/ftgo-order-service:latest
     build:
-      context: ./services/ftgo-order-service
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: services/ftgo-order-service/docker/Dockerfile
     ports:
       - "8083:8083"
     environment:
@@ -86,9 +108,11 @@ services:
       retries: 3
 
   ftgo-courier-service:
+    <<: *service-defaults
+    image: ghcr.io/mbatchelor81/ftgo-courier-service:latest
     build:
-      context: ./services/ftgo-courier-service
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: services/ftgo-courier-service/docker/Dockerfile
     ports:
       - "8084:8084"
     environment:
@@ -102,6 +126,21 @@ services:
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8084/actuator/health"]
       interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Distributed Tracing
+  # ---------------------------------------------------------------------------
+  zipkin:
+    image: openzipkin/zipkin:3.4
+    ports:
+      - "9411:9411"
+    environment:
+      - STORAGE_TYPE=mem
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9411/health"]
+      interval: 15s
       timeout: 5s
       retries: 3
 

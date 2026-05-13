@@ -53,12 +53,46 @@ jobs:
             -x jacocoTestCoverageVerification \
             -x spotlessCheck
 
-      - name: Upload test reports
+      - name: Run quality checks (Checkstyle, PMD, SpotBugs)
+        if: always()
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
+        run: |
+          ./gradlew \
+            "${SERVICE_PATH}:checkstyleMain" \
+            "${SERVICE_PATH}:pmdMain" \
+            "${SERVICE_PATH}:spotbugsMain" \
+            -x spotlessCheck \
+            --continue || true
+
+      - name: Generate JaCoCo coverage report
+        if: always()
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
+        run: |
+          ./gradlew \
+            "${SERVICE_PATH}:jacocoTestReport" \
+            -x spotlessCheck || true
+
+      - name: Upload test and quality reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports-${{ inputs.service-name }}
+          name: reports-${{ inputs.service-name }}
           path: |
-            services/${{ inputs.service-name }}/build/reports/test/
+            services/${{ inputs.service-name }}/build/reports/tests/
             services/${{ inputs.service-name }}/build/test-results/
+            services/${{ inputs.service-name }}/build/reports/checkstyle/
+            services/${{ inputs.service-name }}/build/reports/pmd/
+            services/${{ inputs.service-name }}/build/reports/spotbugs/
+            services/${{ inputs.service-name }}/build/reports/jacoco/
+          retention-days: 14
+
+      - name: Upload JaCoCo coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ inputs.service-name }}
+          path: |
+            services/${{ inputs.service-name }}/build/reports/jacoco/
           retention-days: 14
