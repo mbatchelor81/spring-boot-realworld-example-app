@@ -130,6 +130,53 @@ services:
       retries: 3
 
   # ---------------------------------------------------------------------------
+  # API Gateway
+  # ---------------------------------------------------------------------------
+  ftgo-api-gateway:
+    <<: *service-defaults
+    image: ghcr.io/mbatchelor81/ftgo-api-gateway:latest
+    build:
+      context: .
+      dockerfile: services/ftgo-api-gateway/docker/Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - FTGO_SECURITY_JWT_ISSUER_URI=http://keycloak:8080/realms/ftgo
+      - FTGO_SECURITY_JWT_JWK_SET_URI=http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      ftgo-consumer-service:
+        condition: service_healthy
+      ftgo-restaurant-service:
+        condition: service_healthy
+      ftgo-order-service:
+        condition: service_healthy
+      ftgo-courier-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Redis (for API Gateway rate limiting)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
   # Distributed Tracing
   # ---------------------------------------------------------------------------
   zipkin:
@@ -182,5 +229,6 @@ services:
 
 volumes:
   keycloak-data:
+  redis-data:
   prometheus-data:
   grafana-data:
