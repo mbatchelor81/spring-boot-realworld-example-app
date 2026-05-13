@@ -2,6 +2,27 @@ version: "3.8"
 
 services:
   # ---------------------------------------------------------------------------
+  # Identity Provider (Keycloak)
+  # ---------------------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1.1
+    command: start-dev --import-realm
+    ports:
+      - "9080:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    volumes:
+      - ./infrastructure/keycloak/ftgo-realm.json:/opt/keycloak/data/import/ftgo-realm.json:ro
+      - keycloak-data:/opt/keycloak/data/h2
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && cat <&3 | grep -q '200\|UP'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ---------------------------------------------------------------------------
   # FTGO Microservices
   # ---------------------------------------------------------------------------
   ftgo-consumer-service:
@@ -12,6 +33,12 @@ services:
       - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - FTGO_SECURITY_JWT_ENABLED=true
+      - FTGO_SECURITY_JWT_ISSUER_URI=http://keycloak:8080/realms/ftgo
+      - FTGO_SECURITY_JWT_JWK_SET_URI=http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health"]
       interval: 30s
@@ -26,6 +53,12 @@ services:
       - "8082:8082"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - FTGO_SECURITY_JWT_ENABLED=true
+      - FTGO_SECURITY_JWT_ISSUER_URI=http://keycloak:8080/realms/ftgo
+      - FTGO_SECURITY_JWT_JWK_SET_URI=http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8082/actuator/health"]
       interval: 30s
@@ -40,6 +73,12 @@ services:
       - "8083:8083"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - FTGO_SECURITY_JWT_ENABLED=true
+      - FTGO_SECURITY_JWT_ISSUER_URI=http://keycloak:8080/realms/ftgo
+      - FTGO_SECURITY_JWT_JWK_SET_URI=http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8083/actuator/health"]
       interval: 30s
@@ -54,6 +93,12 @@ services:
       - "8084:8084"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - FTGO_SECURITY_JWT_ENABLED=true
+      - FTGO_SECURITY_JWT_ISSUER_URI=http://keycloak:8080/realms/ftgo
+      - FTGO_SECURITY_JWT_JWK_SET_URI=http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8084/actuator/health"]
       interval: 30s
@@ -97,5 +142,6 @@ services:
       - prometheus
 
 volumes:
+  keycloak-data:
   prometheus-data:
   grafana-data:

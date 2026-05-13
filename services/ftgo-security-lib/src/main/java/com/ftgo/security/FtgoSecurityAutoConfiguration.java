@@ -1,6 +1,8 @@
 package com.ftgo.security;
 
+import com.ftgo.security.jwt.FtgoJwtAuthenticationConverter;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -31,6 +33,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableConfigurationProperties(FtgoSecurityProperties.class)
 public class FtgoSecurityAutoConfiguration {
 
+  @Autowired(required = false)
+  private FtgoJwtAuthenticationConverter jwtAuthenticationConverter;
+
   @Bean
   @ConditionalOnMissingBean(PasswordEncoder.class)
   public PasswordEncoder passwordEncoder() {
@@ -55,9 +60,13 @@ public class FtgoSecurityAutoConfiguration {
         .antMatchers(publicPaths)
         .permitAll()
         .anyRequest()
-        .authenticated()
-        .and()
-        .httpBasic();
+        .authenticated();
+
+    if (properties.getJwt().isEnabled() && jwtAuthenticationConverter != null) {
+      http.oauth2ResourceServer().jwt().jwtAuthenticationConverter(jwtAuthenticationConverter);
+    } else {
+      http.httpBasic();
+    }
 
     return http.build();
   }
