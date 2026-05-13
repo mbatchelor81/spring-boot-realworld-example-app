@@ -84,7 +84,8 @@ class GlobalExceptionHandlerTest {
     mockMvc
         .perform(get("/test/order-minimum"))
         .andExpect(status().isUnprocessableEntity())
-        .andExpect(jsonPath("$.code").value(ErrorCode.BUSINESS_RULE_VIOLATION));
+        .andExpect(jsonPath("$.code").value(ErrorCode.BUSINESS_RULE_VIOLATION))
+        .andExpect(jsonPath("$.message").value("Order minimum not met"));
   }
 
   @Test

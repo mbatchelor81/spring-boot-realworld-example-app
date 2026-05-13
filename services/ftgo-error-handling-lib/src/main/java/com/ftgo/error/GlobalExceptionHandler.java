@@ -156,15 +156,18 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(OrderMinimumNotMetException.class)
   public ResponseEntity<ErrorResponse> handleOrderMinimumNotMet(
       OrderMinimumNotMetException ex) {
+    String message =
+        ex.getMessage() != null ? ex.getMessage() : "Order minimum not met";
+
     ErrorResponse body =
         new ErrorResponse(
             ErrorCode.BUSINESS_RULE_VIOLATION,
-            ex.getMessage(),
+            message,
             null,
             Instant.now(),
             currentTraceId());
 
-    log.warn("Business rule violation: {}", ex.getMessage());
+    log.warn("Business rule violation: {}", message);
     return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
   }
 
@@ -211,7 +214,16 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ErrorResponse> handleAll(Exception ex) {
+  public ResponseEntity<ErrorResponse> handleAll(Exception ex) throws Exception {
+    String exClassName = ex.getClass().getName();
+    if (exClassName.equals("org.springframework.security.access.AccessDeniedException")
+        || exClassName.equals(
+            "org.springframework.security.authentication.AuthenticationException")
+        || exClassName.startsWith(
+            "org.springframework.security.authentication.")) {
+      throw ex;
+    }
+
     log.error("Unhandled exception", ex);
 
     ErrorResponse body =
