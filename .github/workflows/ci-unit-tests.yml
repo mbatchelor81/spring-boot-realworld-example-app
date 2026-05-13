@@ -1,0 +1,97 @@
+# ---------------------------------------------------------------------------
+# CI — Unit Tests (Fast Feedback)
+# ---------------------------------------------------------------------------
+# Runs unit tests across all microservice modules with no external
+# dependencies. Targets < 2 minutes per service.
+# ---------------------------------------------------------------------------
+name: CI — Unit Tests
+
+on:
+  workflow_call:
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - { path: ':services:ftgo-common', name: 'ftgo-common' }
+          - { path: ':services:ftgo-common-jpa', name: 'ftgo-common-jpa' }
+          - { path: ':services:ftgo-domain', name: 'ftgo-domain' }
+          - { path: ':services:ftgo-security-lib', name: 'ftgo-security-lib' }
+          - { path: ':services:ftgo-consumer-service', name: 'ftgo-consumer-service' }
+          - { path: ':services:ftgo-restaurant-service', name: 'ftgo-restaurant-service' }
+          - { path: ':services:ftgo-order-service', name: 'ftgo-order-service' }
+          - { path: ':services:ftgo-courier-service', name: 'ftgo-courier-service' }
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Run unit tests — ${{ matrix.module.name }}
+        run: |
+          ./gradlew \
+            "${{ matrix.module.path }}:test" \
+            -x jacocoTestCoverageVerification \
+            -x spotlessCheck \
+            --parallel
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results-${{ matrix.module.name }}
+          path: |
+            services/${{ matrix.module.name }}/build/test-results/
+            services/${{ matrix.module.name }}/build/reports/test/
+          retention-days: 14
+
+      - name: Upload JaCoCo coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-coverage-${{ matrix.module.name }}
+          path: |
+            services/${{ matrix.module.name }}/build/reports/jacoco/
+          retention-days: 14
+
+  test-summary:
+    name: Unit Test Summary
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: always()
+
+    steps:
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: unit-test-results-*
+          path: test-results/
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: 'test-results/**/TEST-*.xml'
+          check_name: 'Unit Test Results'
+          comment_mode: 'off'
