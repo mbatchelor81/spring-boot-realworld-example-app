@@ -17,6 +17,10 @@ rootProject.name = 'spring-boot-realworld-example-app'
 // ---------------------------------------------------------------------------
 include 'services:ftgo-common'
 include 'services:ftgo-common-jpa'
+include 'services:ftgo-domain'
+include 'services:ftgo-security-lib'
+include 'services:ftgo-openapi-lib'
+include 'services:ftgo-tracing-lib'
 
 // ---------------------------------------------------------------------------
 // Service API modules (events, commands — consumed by other services)

@@ -1,0 +1,186 @@
+version: "3.8"
+
+# ---------------------------------------------------------------------------
+# FTGO Platform — Local Development Compose
+# ---------------------------------------------------------------------------
+# Usage:
+#   docker compose up --build          Build from source and start all services
+#   docker compose up                  Pull pre-built images from GHCR and start
+#   docker compose up ftgo-consumer-service   Start a single service
+# ---------------------------------------------------------------------------
+
+# NOTE: YAML merge (<<:) replaces keys — if a service overrides 'environment',
+# it must re-include SPRING_PROFILES_ACTIVE=docker in its own list.
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  environment:
+    - SPRING_PROFILES_ACTIVE=docker
+
+services:
+  # ---------------------------------------------------------------------------
+  # Identity Provider (Keycloak)
+  # ---------------------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1.1
+    command: start-dev --import-realm
+    ports:
+      - "9080:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    volumes:
+      - ./infrastructure/keycloak/ftgo-realm.json:/opt/keycloak/data/import/ftgo-realm.json:ro
+      - keycloak-data:/opt/keycloak/data/h2
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && cat <&3 | grep -q '200\|UP'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ---------------------------------------------------------------------------
+  # FTGO Microservices
+  # ---------------------------------------------------------------------------
+  ftgo-consumer-service:
+    <<: *service-defaults
+    image: ghcr.io/mbatchelor81/ftgo-consumer-service:latest
+    build:
+      context: .
+      dockerfile: services/ftgo-consumer-service/docker/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - FTGO_SECURITY_JWT_ENABLED=true
+      - FTGO_SECURITY_JWT_ISSUER_URI=http://keycloak:8080/realms/ftgo
+      - FTGO_SECURITY_JWT_JWK_SET_URI=http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  ftgo-restaurant-service:
+    <<: *service-defaults
+    image: ghcr.io/mbatchelor81/ftgo-restaurant-service:latest
+    build:
+      context: .
+      dockerfile: services/ftgo-restaurant-service/docker/Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - FTGO_SECURITY_JWT_ENABLED=true
+      - FTGO_SECURITY_JWT_ISSUER_URI=http://keycloak:8080/realms/ftgo
+      - FTGO_SECURITY_JWT_JWK_SET_URI=http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  ftgo-order-service:
+    <<: *service-defaults
+    image: ghcr.io/mbatchelor81/ftgo-order-service:latest
+    build:
+      context: .
+      dockerfile: services/ftgo-order-service/docker/Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - FTGO_SECURITY_JWT_ENABLED=true
+      - FTGO_SECURITY_JWT_ISSUER_URI=http://keycloak:8080/realms/ftgo
+      - FTGO_SECURITY_JWT_JWK_SET_URI=http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  ftgo-courier-service:
+    <<: *service-defaults
+    image: ghcr.io/mbatchelor81/ftgo-courier-service:latest
+    build:
+      context: .
+      dockerfile: services/ftgo-courier-service/docker/Dockerfile
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - FTGO_SECURITY_JWT_ENABLED=true
+      - FTGO_SECURITY_JWT_ISSUER_URI=http://keycloak:8080/realms/ftgo
+      - FTGO_SECURITY_JWT_JWK_SET_URI=http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Distributed Tracing
+  # ---------------------------------------------------------------------------
+  zipkin:
+    image: openzipkin/zipkin:3.4
+    ports:
+      - "9411:9411"
+    environment:
+      - STORAGE_TYPE=mem
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9411/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Monitoring
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alerting-rules.yml:/etc/prometheus/alerting-rules.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    depends_on:
+      - ftgo-consumer-service
+      - ftgo-restaurant-service
+      - ftgo-order-service
+      - ftgo-courier-service
+
+  grafana:
+    image: grafana/grafana:10.4.1
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  keycloak-data:
+  prometheus-data:
+  grafana-data:

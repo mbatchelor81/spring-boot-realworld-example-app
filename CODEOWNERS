@@ -1,0 +1,45 @@
+# CODEOWNERS — Automatic reviewer assignment
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default reviewers for all files
+*                                           @mbatchelor81
+
+# Monolith (legacy)
+/src/                                       @mbatchelor81
+/build.gradle                               @mbatchelor81
+
+# Shared libraries
+/services/ftgo-common/                      @mbatchelor81
+/services/ftgo-common-jpa/                  @mbatchelor81
+/services/ftgo-domain/                      @mbatchelor81
+/services/ftgo-security-lib/                @mbatchelor81
+/services/ftgo-openapi-lib/                 @mbatchelor81
+
+# Consumer service
+/services/ftgo-consumer-service/            @mbatchelor81
+/services/ftgo-consumer-service-api/        @mbatchelor81
+
+# Order service
+/services/ftgo-order-service/               @mbatchelor81
+/services/ftgo-order-service-api/           @mbatchelor81
+
+# Restaurant service
+/services/ftgo-restaurant-service/          @mbatchelor81
+/services/ftgo-restaurant-service-api/      @mbatchelor81
+
+# Courier service
+/services/ftgo-courier-service/             @mbatchelor81
+/services/ftgo-courier-service-api/         @mbatchelor81
+
+# Build infrastructure and CI
+/gradle/                                    @mbatchelor81
+/.github/                                   @mbatchelor81
+/settings.gradle                            @mbatchelor81
+
+# Documentation
+/CONTRIBUTING.md                            @mbatchelor81
+/README.md                                  @mbatchelor81
+
+# Docker and deployment
+/docker-compose.yml                         @mbatchelor81
+/monitoring/                                @mbatchelor81

@@ -4,14 +4,58 @@ server:
 spring:
   application:
     name: ftgo-restaurant-service
+  datasource:
+    url: jdbc:h2:mem:ftgo_restaurant_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
   jpa:
     hibernate:
       ddl-auto: validate
+    database-platform: org.hibernate.dialect.H2Dialect
   flyway:
     enabled: true
+    locations: classpath:db/migration
+
+ftgo:
+  security:
+    public-paths:
+      - /actuator/health
+      - /actuator/info
+    cors:
+      allowed-origins:
+        - "*"
+  tracing:
+    zipkin-endpoint: http://localhost:9411/api/v2/spans
+    sampling-rate: 1.0
+    propagation-type: B3
+  openapi:
+    title: Restaurant Service API
+    description: Manages restaurant onboarding, menus, and order acceptance
+    version: 1.0.0
+    server-url: http://localhost:8082
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
