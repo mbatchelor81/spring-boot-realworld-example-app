@@ -7,6 +7,7 @@
 name: CI — E2E Tests
 
 on:
+  workflow_call:
   push:
     branches: [main, feat/microservices-migration]
     paths:

@@ -1,10 +1,9 @@
 # ---------------------------------------------------------------------------
 # CI — Test Gate (Required Status Check)
 # ---------------------------------------------------------------------------
-# Consolidates unit, integration, and E2E test workflows into a single
-# required status check. Each test tier runs as a reusable workflow call,
-# and the final gate job depends on all of them — PRs cannot merge if
-# any test tier fails.
+# Single required status check that calls all three test tier workflows
+# via workflow_call. The final gate job depends on all of them — PRs
+# cannot merge if any test tier fails.
 # ---------------------------------------------------------------------------
 name: CI — Test Gate
 
@@ -17,186 +16,18 @@ on:
 jobs:
   unit-tests:
     name: Unit Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Run all unit tests
-        run: |
-          ./gradlew \
-            :services:ftgo-common:test \
-            :services:ftgo-common-jpa:test \
-            :services:ftgo-domain:test \
-            :services:ftgo-security-lib:test \
-            :services:ftgo-consumer-service:test \
-            :services:ftgo-restaurant-service:test \
-            :services:ftgo-order-service:test \
-            :services:ftgo-courier-service:test \
-            -x jacocoTestCoverageVerification \
-            -x spotlessCheck \
-            --parallel
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gate-unit-test-results
-          path: services/*/build/test-results/
-          retention-days: 7
+    uses: ./.github/workflows/ci-unit-tests.yml
+    secrets: inherit
 
   integration-tests:
     name: Integration Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: testpassword
-          MYSQL_DATABASE: ftgo_test
-          MYSQL_USER: ftgo
-          MYSQL_PASSWORD: ftgo_password
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Run integration tests
-        env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/ftgo_test
-          SPRING_DATASOURCE_USERNAME: ftgo
-          SPRING_DATASOURCE_PASSWORD: ftgo_password
-          SPRING_PROFILES_ACTIVE: integration-test
-        run: |
-          ./gradlew \
-            :services:ftgo-consumer-service:test \
-            :services:ftgo-restaurant-service:test \
-            :services:ftgo-order-service:test \
-            :services:ftgo-courier-service:test \
-            -x jacocoTestCoverageVerification \
-            -x spotlessCheck \
-            --parallel
+    uses: ./.github/workflows/ci-integration-tests.yml
+    secrets: inherit
 
   e2e-tests:
     name: E2E Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Build all services
-        run: |
-          ./gradlew clean assemble \
-            -x jacocoTestCoverageVerification \
-            -x spotlessCheck \
-            -x test
-
-      - name: Start service stack
-        run: |
-          docker compose up -d \
-            ftgo-consumer-service \
-            ftgo-restaurant-service \
-            ftgo-order-service \
-            ftgo-courier-service
-
-      - name: Wait for services to be healthy
-        run: |
-          echo "Waiting for services to start..."
-          services=("8081" "8082" "8083" "8084")
-          for port in "${services[@]}"; do
-            echo "Checking service on port $port..."
-            retries=30
-            until curl -sf "http://localhost:$port/actuator/health" > /dev/null 2>&1; do
-              retries=$((retries - 1))
-              if [ $retries -le 0 ]; then
-                echo "Service on port $port failed to start"
-                docker compose logs
-                exit 1
-              fi
-              echo "  Waiting... ($retries retries left)"
-              sleep 5
-            done
-            echo "  Service on port $port is healthy"
-          done
-
-      - name: Run E2E smoke tests
-        run: |
-          echo "=== Consumer Service ==="
-          curl -sf http://localhost:8081/actuator/health | python3 -m json.tool
-
-          echo "=== Restaurant Service ==="
-          curl -sf http://localhost:8082/actuator/health | python3 -m json.tool
-
-          echo "=== Order Service ==="
-          curl -sf http://localhost:8083/actuator/health | python3 -m json.tool
-
-          echo "=== Courier Service ==="
-          curl -sf http://localhost:8084/actuator/health | python3 -m json.tool
-
-      - name: Stop service stack
-        if: always()
-        run: docker compose down -v
+    uses: ./.github/workflows/ci-e2e-tests.yml
+    secrets: inherit
 
   test-gate:
     name: Test Gate
@@ -215,8 +46,8 @@ jobs:
           if [[ "${{ needs.unit-tests.result }}" != "success" ]] || \
              [[ "${{ needs.integration-tests.result }}" != "success" ]] || \
              [[ "${{ needs.e2e-tests.result }}" != "success" ]]; then
-            echo "❌ One or more test tiers failed. Blocking merge."
+            echo "One or more test tiers failed. Blocking merge."
             exit 1
           fi
 
-          echo "✅ All test tiers passed."
+          echo "All test tiers passed."
