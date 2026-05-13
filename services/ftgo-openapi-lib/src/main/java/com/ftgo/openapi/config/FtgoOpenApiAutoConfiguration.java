@@ -8,6 +8,7 @@ import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -43,10 +44,11 @@ public class FtgoOpenApiAutoConfiguration {
     return new OpenAPI()
         .info(apiInfo())
         .servers(
-            List.of(
-                new Server()
-                    .url(properties.getServerUrl())
-                    .description("Local development server")))
+            new ArrayList<>(
+                List.of(
+                    new Server()
+                        .url(properties.getServerUrl())
+                        .description("Local development server"))))
         .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))
         .components(
             new Components()
