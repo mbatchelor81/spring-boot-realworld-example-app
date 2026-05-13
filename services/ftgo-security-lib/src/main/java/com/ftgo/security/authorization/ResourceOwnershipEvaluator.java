@@ -1,17 +1,31 @@
 package com.ftgo.security.authorization;
 
-import com.ftgo.security.jwt.FtgoUserContext;
-import java.util.Optional;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 public class ResourceOwnershipEvaluator {
+
+  private final String userIdClaim;
+
+  public ResourceOwnershipEvaluator() {
+    this("sub");
+  }
+
+  public ResourceOwnershipEvaluator(String userIdClaim) {
+    this.userIdClaim = userIdClaim;
+  }
 
   public boolean isOwner(Authentication authentication, String resourceOwnerId) {
     if (authentication == null || resourceOwnerId == null) {
       return false;
     }
-    Optional<String> currentUserId = FtgoUserContext.getUserId();
-    return currentUserId.isPresent() && currentUserId.get().equals(resourceOwnerId);
+    if (!(authentication instanceof JwtAuthenticationToken)) {
+      return false;
+    }
+    Jwt jwt = ((JwtAuthenticationToken) authentication).getToken();
+    String currentUserId = jwt.getClaimAsString(userIdClaim);
+    return currentUserId != null && currentUserId.equals(resourceOwnerId);
   }
 
   public boolean isOwnerOrAdmin(Authentication authentication, String resourceOwnerId) {

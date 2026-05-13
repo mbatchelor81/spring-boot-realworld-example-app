@@ -38,7 +38,7 @@ Configured in `FtgoAuthorizationAutoConfiguration` using Spring's `RoleHierarchy
 |-----------|----------|---------------|
 | Create order | `POST /api/orders` | CUSTOMER |
 | View order | `GET /api/orders/{id}` | CUSTOMER |
-| Cancel order | `DELETE /api/orders/{id}` | CUSTOMER + owner |
+| Cancel order | `DELETE /api/orders/{id}` | CUSTOMER (+ owner when DB layer added) |
 | Accept order | `PUT /api/orders/{id}/accept` | RESTAURANT_OWNER |
 | Mark preparing | `PUT /api/orders/{id}/preparing` | RESTAURANT_OWNER |
 | Mark ready | `PUT /api/orders/{id}/ready` | RESTAURANT_OWNER |
@@ -80,9 +80,13 @@ The `ResourceOwnershipEvaluator` bean provides resource-level authorization:
 
 Used in `@PreAuthorize` expressions:
 ```java
-@PreAuthorize("hasRole('CUSTOMER') and @resourceOwnershipEvaluator.isOwnerOrAdmin(authentication, #consumerId.toString())")
-public void cancelOrder(Long orderId, Long consumerId) { ... }
+@PreAuthorize("hasRole('CUSTOMER') and @resourceOwnershipEvaluator.isOwnerOrAdmin(authentication, #ownerFromDb)")
+public void cancelOrder(Long orderId, String ownerFromDb) { ... }
 ```
+
+> **Note:** Ownership validation requires a database layer to look up the actual resource owner.
+> Stub service methods currently use role-based checks only. Each method has a TODO
+> comment documenting the pattern for adding ownership validation when the DB layer is implemented.
 
 ## JWT Claims
 
