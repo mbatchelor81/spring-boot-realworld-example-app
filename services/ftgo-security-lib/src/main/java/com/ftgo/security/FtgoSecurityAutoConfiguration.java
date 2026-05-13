@@ -1,7 +1,5 @@
 package com.ftgo.security;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -71,7 +69,7 @@ public class FtgoSecurityAutoConfiguration {
 
     CorsConfiguration configuration = new CorsConfiguration();
     List<String> origins = corsProps.getAllowedOrigins();
-    if (origins.equals(Collections.singletonList("*"))) {
+    if (origins.contains("*")) {
       configuration.setAllowedOriginPatterns(origins);
     } else {
       configuration.setAllowedOrigins(origins);
@@ -80,7 +78,7 @@ public class FtgoSecurityAutoConfiguration {
     configuration.setAllowedHeaders(corsProps.getAllowedHeaders());
     configuration.setAllowCredentials(corsProps.isAllowCredentials());
     configuration.setMaxAge(corsProps.getMaxAge());
-    configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
+    configuration.setExposedHeaders(corsProps.getExposedHeaders());
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);

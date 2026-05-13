@@ -50,6 +50,8 @@ public class FtgoSecurityProperties {
 
     private long maxAge = 3600;
 
+    private List<String> exposedHeaders = Arrays.asList("Authorization", "Content-Type");
+
     public List<String> getAllowedOrigins() {
       return allowedOrigins;
     }
@@ -88,6 +90,14 @@ public class FtgoSecurityProperties {
 
     public void setMaxAge(long maxAge) {
       this.maxAge = maxAge;
+    }
+
+    public List<String> getExposedHeaders() {
+      return exposedHeaders;
+    }
+
+    public void setExposedHeaders(List<String> exposedHeaders) {
+      this.exposedHeaders = exposedHeaders;
     }
   }
 }
