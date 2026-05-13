@@ -15,6 +15,7 @@ repositories {
 
 dependencies {
     api 'javax.persistence:javax.persistence-api:2.2'
+    api 'javax.validation:validation-api:2.0.1.Final'
     api 'commons-lang:commons-lang:2.6'
     api 'com.fasterxml.jackson.core:jackson-databind:2.13.1'
     api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.1'

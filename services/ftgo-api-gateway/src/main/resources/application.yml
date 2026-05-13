@@ -1,0 +1,452 @@
+server:
+  port: 8085
+  ssl:
+    enabled: false
+    # To enable SSL/TLS, configure the following:
+    # key-store: classpath:keystore.p12
+    # key-store-password: ${SSL_KEYSTORE_PASSWORD}
+    # key-store-type: PKCS12
+    # key-alias: ftgo-gateway
+
+spring:
+  application:
+    name: ftgo-api-gateway
+
+  # --- Redis (for rate limiting) ---
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    connect-timeout: 2000
+
+  cloud:
+    gateway:
+      # -----------------------------------------------------------------
+      # Default filters applied to all routes
+      # -----------------------------------------------------------------
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
+
+      # -----------------------------------------------------------------
+      # Route definitions — API versioning via path prefix /api/v1/**
+      # -----------------------------------------------------------------
+      routes:
+        # --- Consumer Service (port 8081) ---
+        - id: consumer-service
+          uri: ${CONSUMER_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/consumers/**,/api/v1/consumers/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
+            - name: CircuitBreaker
+              args:
+                name: consumerServiceCB
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
+
+        # --- Restaurant Service (port 8082) ---
+        - id: restaurant-service
+          uri: ${RESTAURANT_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/restaurants/**,/api/v1/restaurants/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
+            - name: CircuitBreaker
+              args:
+                name: restaurantServiceCB
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
+
+        # --- Order Service (port 8083) ---
+        - id: order-service
+          uri: ${ORDER_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/orders/**,/api/v1/orders/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
+            - name: CircuitBreaker
+              args:
+                name: orderServiceCB
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
+
+        # --- Courier Service (port 8084) ---
+        - id: courier-service
+          uri: ${COURIER_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/couriers/**,/api/v1/couriers/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
+            - name: CircuitBreaker
+              args:
+                name: courierServiceCB
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
+
+# -----------------------------------------------------------------
+# Security — JWT validation (Keycloak)
+# -----------------------------------------------------------------
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${FTGO_SECURITY_JWT_ISSUER_URI:http://localhost:9080/realms/ftgo}
+          jwk-set-uri: ${FTGO_SECURITY_JWT_JWK_SET_URI:http://localhost:9080/realms/ftgo/protocol/openid-connect/certs}
+
+ftgo:
+  security:
+    jwt:
+      roles-claim: realm_access.roles
+      role-prefix: "ROLE_"
+      username-claim: preferred_username
+  gateway:
+    cors:
+      allowed-origins: "*"
+      allowed-methods: GET,POST,PUT,DELETE,PATCH,OPTIONS
+      allowed-headers: "*"
+      allow-credentials: false
+      max-age: 3600
+
+# -----------------------------------------------------------------
+# Resilience4j circuit breaker configuration
+# -----------------------------------------------------------------
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 5
+        slowCallRateThreshold: 80
+        slowCallDurationThreshold: 5s
+        recordExceptions:
+          - java.io.IOException
+          - java.net.ConnectException
+          - org.springframework.web.reactive.function.client.WebClientResponseException
+    instances:
+      consumerServiceCB:
+        baseConfig: default
+      restaurantServiceCB:
+        baseConfig: default
+      orderServiceCB:
+        baseConfig: default
+      courierServiceCB:
+        baseConfig: default
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 10s
+
+# -----------------------------------------------------------------
+# Actuator
+# -----------------------------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+    gateway:
+      enabled: true
+    prometheus:
+      enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+# -----------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------
+logging:
+  level:
+    com.ftgo.gateway: INFO
+    org.springframework.cloud.gateway: INFO
+    io.github.resilience4j: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"
+
+---
+# Docker profile
+spring:
+  config:
+    activate:
+      on-profile: docker
+  redis:
+    host: redis
+  cloud:
+    gateway:
+      routes:
+        - id: consumer-service
+          uri: http://ftgo-consumer-service:8081
+          predicates:
+            - Path=/api/consumers/**,/api/v1/consumers/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
+            - name: CircuitBreaker
+              args:
+                name: consumerServiceCB
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
+        - id: restaurant-service
+          uri: http://ftgo-restaurant-service:8082
+          predicates:
+            - Path=/api/restaurants/**,/api/v1/restaurants/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
+            - name: CircuitBreaker
+              args:
+                name: restaurantServiceCB
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
+        - id: order-service
+          uri: http://ftgo-order-service:8083
+          predicates:
+            - Path=/api/orders/**,/api/v1/orders/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
+            - name: CircuitBreaker
+              args:
+                name: orderServiceCB
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
+        - id: courier-service
+          uri: http://ftgo-courier-service:8084
+          predicates:
+            - Path=/api/couriers/**,/api/v1/couriers/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
+            - name: CircuitBreaker
+              args:
+                name: courierServiceCB
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8080/realms/ftgo
+          jwk-set-uri: http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+
+---
+# K8s profile
+spring:
+  config:
+    activate:
+      on-profile: k8s
+  redis:
+    host: ${REDIS_HOST:redis}
+  cloud:
+    gateway:
+      routes:
+        - id: consumer-service
+          uri: http://ftgo-consumer-service:8081
+          predicates:
+            - Path=/api/consumers/**,/api/v1/consumers/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
+            - name: CircuitBreaker
+              args:
+                name: consumerServiceCB
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
+        - id: restaurant-service
+          uri: http://ftgo-restaurant-service:8082
+          predicates:
+            - Path=/api/restaurants/**,/api/v1/restaurants/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
+            - name: CircuitBreaker
+              args:
+                name: restaurantServiceCB
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
+        - id: order-service
+          uri: http://ftgo-order-service:8083
+          predicates:
+            - Path=/api/orders/**,/api/v1/orders/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
+            - name: CircuitBreaker
+              args:
+                name: orderServiceCB
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2
+        - id: courier-service
+          uri: http://ftgo-courier-service:8084
+          predicates:
+            - Path=/api/couriers/**,/api/v1/couriers/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /api/${segment}
+            - name: CircuitBreaker
+              args:
+                name: courierServiceCB
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                methods: GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+                  factor: 2

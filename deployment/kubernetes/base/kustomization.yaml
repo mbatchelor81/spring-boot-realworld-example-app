@@ -38,6 +38,11 @@ resources:
   - ftgo-courier-service/service.yaml
   - ftgo-courier-service/configmap.yaml
   - ftgo-courier-service/hpa.yaml
+  # API Gateway
+  - ftgo-api-gateway/deployment.yaml
+  - ftgo-api-gateway/service.yaml
+  - ftgo-api-gateway/configmap.yaml
+  - ftgo-api-gateway/hpa.yaml
   # Networking
   - ingress/ingress.yaml
 
