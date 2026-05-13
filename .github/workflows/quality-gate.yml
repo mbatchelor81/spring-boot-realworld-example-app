@@ -137,6 +137,13 @@ jobs:
             -x spotlessCheck \
             --continue
 
+      - name: Generate JaCoCo reports
+        run: |
+          ./gradlew jacocoTestReport \
+            -x jacocoTestCoverageVerification \
+            -x spotlessCheck \
+            --continue || true
+
       - name: SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

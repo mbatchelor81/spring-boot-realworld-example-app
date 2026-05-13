@@ -27,11 +27,7 @@ tasks.withType(Checkstyle).configureEach {
         xml.required = true
         html.required = true
     }
-    // Exclude generated sources
-    source = fileTree(project.projectDir) {
-        include 'src/**/*.java'
-        exclude 'build/generated/**'
-    }
+    exclude '**/generated/**'
 }
 
 // ---- PMD ------------------------------------------------------------------
@@ -54,11 +50,7 @@ tasks.withType(Pmd).configureEach {
         xml.required = true
         html.required = true
     }
-    // Exclude generated sources
-    source = fileTree(project.projectDir) {
-        include 'src/**/*.java'
-        exclude 'build/generated/**'
-    }
+    exclude '**/generated/**'
 }
 
 // ---- SpotBugs -------------------------------------------------------------
