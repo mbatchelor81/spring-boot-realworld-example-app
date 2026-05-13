@@ -45,3 +45,15 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: ftgo-courier-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ftgo-api-gateway
+  labels:
+    app.kubernetes.io/name: ftgo-api-gateway
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ftgo-api-gateway

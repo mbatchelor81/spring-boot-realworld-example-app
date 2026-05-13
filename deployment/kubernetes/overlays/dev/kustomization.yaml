@@ -28,3 +28,5 @@ images:
     newTag: latest
   - name: ghcr.io/mbatchelor81/ftgo-courier-service
     newTag: latest
+  - name: ghcr.io/mbatchelor81/ftgo-api-gateway
+    newTag: latest

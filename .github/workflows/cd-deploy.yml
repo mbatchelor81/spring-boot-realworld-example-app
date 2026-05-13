@@ -145,7 +145,7 @@ jobs:
         working-directory: deployment/kubernetes/overlays
         run: |
           cd "$TARGET_ENV"
-          for SERVICE in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
+          for SERVICE in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service ftgo-api-gateway; do
             kustomize edit set image "${{ env.IMAGE_PREFIX }}/${SERVICE}=${{ env.IMAGE_PREFIX }}/${SERVICE}:${IMAGE_TAG}"
           done
 
@@ -161,7 +161,7 @@ jobs:
         env:
           NAMESPACE: ${{ needs.resolve.outputs.namespace }}
         run: |
-          for DEPLOY in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
+          for DEPLOY in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service ftgo-api-gateway; do
             echo "Waiting for ${DEPLOY}..."
             kubectl rollout status deployment/${DEPLOY} \
               --namespace="${NAMESPACE}" \

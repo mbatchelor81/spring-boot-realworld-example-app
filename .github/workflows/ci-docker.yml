@@ -61,6 +61,8 @@ jobs:
             dockerfile: services/ftgo-order-service/docker/Dockerfile
           - service: ftgo-courier-service
             dockerfile: services/ftgo-courier-service/docker/Dockerfile
+          - service: ftgo-api-gateway
+            dockerfile: services/ftgo-api-gateway/docker/Dockerfile
 
     steps:
       - name: Checkout
@@ -145,6 +147,7 @@ jobs:
           - ftgo-restaurant-service
           - ftgo-order-service
           - ftgo-courier-service
+          - ftgo-api-gateway
     permissions:
       packages: write
     steps:
