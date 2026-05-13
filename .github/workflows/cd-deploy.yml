@@ -1,0 +1,173 @@
+# ---------------------------------------------------------------------------
+# CD — Deploy to Kubernetes
+# ---------------------------------------------------------------------------
+# Deploys FTGO microservices to the target environment using Kustomize.
+# Triggered automatically on merge to main (deploys to dev) or manually
+# via workflow_dispatch for any environment.
+#
+# Prerequisites:
+#   - GitHub Environment secrets: KUBE_CONFIG (base64-encoded kubeconfig)
+#   - Sealed Secrets controller installed in the target cluster
+#   - GHCR images built by ci-docker.yml
+# ---------------------------------------------------------------------------
+
+name: CD — Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'deployment/kubernetes/**'
+      - 'services/**'
+      - '.github/workflows/cd-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+        default: dev
+      image_tag:
+        description: 'Image tag to deploy (e.g., 0.0.1-a1b2c3d)'
+        required: false
+        type: string
+        default: latest
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
+
+jobs:
+  # -------------------------------------------------------------------------
+  # Determine deployment target
+  # -------------------------------------------------------------------------
+  resolve:
+    name: Resolve deployment parameters
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.params.outputs.environment }}
+      image_tag: ${{ steps.params.outputs.image_tag }}
+      namespace: ${{ steps.params.outputs.namespace }}
+    steps:
+      - name: Set parameters
+        id: params
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            ENV="${{ github.event.inputs.environment }}"
+            TAG="${{ github.event.inputs.image_tag }}"
+          else
+            ENV="dev"
+            TAG="latest"
+          fi
+
+          echo "environment=${ENV}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "namespace=ftgo-${ENV}" >> "$GITHUB_OUTPUT"
+          echo "Deploying to ${ENV} with tag ${TAG}"
+
+  # -------------------------------------------------------------------------
+  # Validate manifests
+  # -------------------------------------------------------------------------
+  validate:
+    name: Validate K8s manifests
+    runs-on: ubuntu-latest
+    needs: resolve
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Validate overlay — ${{ needs.resolve.outputs.environment }}
+        run: |
+          kustomize build deployment/kubernetes/overlays/${{ needs.resolve.outputs.environment }} > /dev/null
+          echo "Kustomize build successful for ${{ needs.resolve.outputs.environment }}"
+
+      - name: Dry-run render
+        run: |
+          kustomize build deployment/kubernetes/overlays/${{ needs.resolve.outputs.environment }} \
+            | tee /tmp/manifests.yaml
+          echo "---"
+          echo "Manifest line count: $(wc -l < /tmp/manifests.yaml)"
+
+  # -------------------------------------------------------------------------
+  # Deploy to target environment
+  # -------------------------------------------------------------------------
+  deploy:
+    name: Deploy — ${{ needs.resolve.outputs.environment }}
+    runs-on: ubuntu-latest
+    needs: [resolve, validate]
+    environment:
+      name: ${{ needs.resolve.outputs.environment }}
+      url: https://ftgo-${{ needs.resolve.outputs.environment }}.example.com
+    concurrency:
+      group: deploy-${{ needs.resolve.outputs.environment }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Configure kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Set kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Update image tags
+        working-directory: deployment/kubernetes/overlays/${{ needs.resolve.outputs.environment }}
+        run: |
+          TAG="${{ needs.resolve.outputs.image_tag }}"
+          for SERVICE in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
+            kustomize edit set image "${{ env.IMAGE_PREFIX }}/${SERVICE}=${{ env.IMAGE_PREFIX }}/${SERVICE}:${TAG}"
+          done
+
+      - name: Apply manifests
+        run: |
+          kustomize build deployment/kubernetes/overlays/${{ needs.resolve.outputs.environment }} \
+            | kubectl apply -f - --namespace=${{ needs.resolve.outputs.namespace }}
+
+      - name: Wait for rollouts
+        run: |
+          NAMESPACE="${{ needs.resolve.outputs.namespace }}"
+          for DEPLOY in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
+            echo "Waiting for ${DEPLOY}..."
+            kubectl rollout status deployment/${DEPLOY} \
+              --namespace=${NAMESPACE} \
+              --timeout=300s
+          done
+
+      - name: Verify health
+        run: |
+          NAMESPACE="${{ needs.resolve.outputs.namespace }}"
+          echo "Pod status:"
+          kubectl get pods --namespace=${NAMESPACE} -o wide
+          echo "---"
+          echo "Service endpoints:"
+          kubectl get endpoints --namespace=${NAMESPACE}
+
+      - name: Post deployment summary
+        if: always()
+        run: |
+          echo "## Deployment Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Parameter | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Environment | ${{ needs.resolve.outputs.environment }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Namespace | ${{ needs.resolve.outputs.namespace }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image Tag | ${{ needs.resolve.outputs.image_tag }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Commit | ${{ github.sha }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Triggered by | ${{ github.actor }} |" >> "$GITHUB_STEP_SUMMARY"

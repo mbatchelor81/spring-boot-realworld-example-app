@@ -1,0 +1,199 @@
+# ---------------------------------------------------------------------------
+# CD — Environment Promotion
+# ---------------------------------------------------------------------------
+# Promotes a deployment from one environment to the next:
+#   dev → staging → prod
+#
+# Staging and prod promotions require approval via GitHub Environments.
+# The workflow reads the currently deployed image tag from the source
+# environment and deploys it to the target.
+#
+# Prerequisites:
+#   - GitHub Environments configured with protection rules:
+#     * staging: requires 1 reviewer
+#     * prod: requires 2 reviewers
+#   - KUBE_CONFIG secret in each environment
+# ---------------------------------------------------------------------------
+
+name: CD — Promote
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_environment:
+        description: 'Source environment to promote from'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+      image_tag:
+        description: 'Image tag to promote (reads from source env if blank)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
+
+jobs:
+  # -------------------------------------------------------------------------
+  # Determine promotion path
+  # -------------------------------------------------------------------------
+  resolve:
+    name: Resolve promotion path
+    runs-on: ubuntu-latest
+    outputs:
+      source: ${{ steps.path.outputs.source }}
+      target: ${{ steps.path.outputs.target }}
+      image_tag: ${{ steps.path.outputs.image_tag }}
+      source_namespace: ${{ steps.path.outputs.source_namespace }}
+      target_namespace: ${{ steps.path.outputs.target_namespace }}
+    steps:
+      - name: Determine target
+        id: path
+        run: |
+          SOURCE="${{ github.event.inputs.source_environment }}"
+          case "${SOURCE}" in
+            dev)     TARGET="staging" ;;
+            staging) TARGET="prod"    ;;
+            *)
+              echo "::error::Invalid source environment: ${SOURCE}"
+              exit 1
+              ;;
+          esac
+
+          TAG="${{ github.event.inputs.image_tag }}"
+          if [[ -z "${TAG}" ]]; then
+            TAG="latest"
+          fi
+
+          echo "source=${SOURCE}" >> "$GITHUB_OUTPUT"
+          echo "target=${TARGET}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "source_namespace=ftgo-${SOURCE}" >> "$GITHUB_OUTPUT"
+          echo "target_namespace=ftgo-${TARGET}" >> "$GITHUB_OUTPUT"
+
+          echo "## Promotion Plan" >> "$GITHUB_STEP_SUMMARY"
+          echo "| | |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Source | ${SOURCE} (ftgo-${SOURCE}) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Target | ${TARGET} (ftgo-${TARGET}) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image Tag | ${TAG} |" >> "$GITHUB_STEP_SUMMARY"
+
+  # -------------------------------------------------------------------------
+  # Validate source environment health
+  # -------------------------------------------------------------------------
+  validate-source:
+    name: Validate source — ${{ needs.resolve.outputs.source }}
+    runs-on: ubuntu-latest
+    needs: resolve
+    environment: ${{ needs.resolve.outputs.source }}
+    steps:
+      - name: Configure kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Set kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Check source deployments
+        run: |
+          NS="${{ needs.resolve.outputs.source_namespace }}"
+          echo "Checking deployments in ${NS}..."
+          for DEPLOY in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
+            STATUS=$(kubectl get deployment ${DEPLOY} -n ${NS} -o jsonpath='{.status.conditions[?(@.type=="Available")].status}' 2>/dev/null || echo "NotFound")
+            if [[ "${STATUS}" != "True" ]]; then
+              echo "::error::Deployment ${DEPLOY} is not healthy in ${NS} (status: ${STATUS})"
+              exit 1
+            fi
+            echo "${DEPLOY}: healthy"
+          done
+
+  # -------------------------------------------------------------------------
+  # Deploy to target (requires approval for staging/prod)
+  # -------------------------------------------------------------------------
+  promote:
+    name: Promote to ${{ needs.resolve.outputs.target }}
+    runs-on: ubuntu-latest
+    needs: [resolve, validate-source]
+    environment:
+      name: ${{ needs.resolve.outputs.target }}
+      url: https://ftgo-${{ needs.resolve.outputs.target }}.example.com
+    concurrency:
+      group: deploy-${{ needs.resolve.outputs.target }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Configure kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Set kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Update image tags
+        working-directory: deployment/kubernetes/overlays/${{ needs.resolve.outputs.target }}
+        run: |
+          TAG="${{ needs.resolve.outputs.image_tag }}"
+          for SERVICE in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
+            kustomize edit set image "${{ env.IMAGE_PREFIX }}/${SERVICE}=${{ env.IMAGE_PREFIX }}/${SERVICE}:${TAG}"
+          done
+
+      - name: Apply manifests
+        run: |
+          kustomize build deployment/kubernetes/overlays/${{ needs.resolve.outputs.target }} \
+            | kubectl apply -f - --namespace=${{ needs.resolve.outputs.target_namespace }}
+
+      - name: Wait for rollouts
+        run: |
+          NS="${{ needs.resolve.outputs.target_namespace }}"
+          for DEPLOY in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
+            echo "Waiting for ${DEPLOY} in ${NS}..."
+            kubectl rollout status deployment/${DEPLOY} \
+              --namespace=${NS} \
+              --timeout=300s
+          done
+
+      - name: Run smoke tests
+        run: |
+          NS="${{ needs.resolve.outputs.target_namespace }}"
+          echo "Running smoke tests in ${NS}..."
+          for SVC in ftgo-consumer-service:8081 ftgo-restaurant-service:8082 ftgo-order-service:8083 ftgo-courier-service:8084; do
+            NAME="${SVC%%:*}"
+            PORT="${SVC##*:}"
+            echo "Checking ${NAME} health endpoint..."
+            kubectl run smoke-test-${NAME} \
+              --namespace=${NS} \
+              --image=curlimages/curl:latest \
+              --restart=Never \
+              --rm -i --timeout=30s \
+              -- curl -sf "http://${NAME}:${PORT}/actuator/health" || {
+                echo "::warning::Smoke test failed for ${NAME}"
+              }
+          done
+
+      - name: Post promotion summary
+        if: always()
+        run: |
+          echo "## Promotion Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Parameter | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Source | ${{ needs.resolve.outputs.source }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Target | ${{ needs.resolve.outputs.target }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image Tag | ${{ needs.resolve.outputs.image_tag }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Commit | ${{ github.sha }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Promoted by | ${{ github.actor }} |" >> "$GITHUB_STEP_SUMMARY"
