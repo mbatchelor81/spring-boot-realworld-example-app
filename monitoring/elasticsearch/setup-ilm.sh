@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # ---------------------------------------------------------------------------
 # Elasticsearch ILM Setup — log retention policies for local dev
 # ---------------------------------------------------------------------------
@@ -21,7 +21,6 @@ curl -sf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-dev" -H 'Content-Type: applicati
       "hot": {
         "min_age": "0ms",
         "actions": {
-          "rollover": { "max_age": "1d", "max_size": "5gb" }
         }
       },
       "delete": {
@@ -39,7 +38,6 @@ curl -sf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-staging" -H 'Content-Type: appli
       "hot": {
         "min_age": "0ms",
         "actions": {
-          "rollover": { "max_age": "1d", "max_size": "10gb" }
         }
       },
       "warm": {
@@ -64,7 +62,6 @@ curl -sf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-prod" -H 'Content-Type: applicat
       "hot": {
         "min_age": "0ms",
         "actions": {
-          "rollover": { "max_age": "1d", "max_size": "20gb" }
         }
       },
       "warm": {
@@ -95,8 +92,7 @@ curl -sf -X PUT "$ES_HOST/_index_template/ftgo-logs" -H 'Content-Type: applicati
     "settings": {
       "number_of_shards": 1,
       "number_of_replicas": 0,
-      "index.lifecycle.name": "ftgo-logs-dev",
-      "index.lifecycle.rollover_alias": "ftgo-logs"
+      "index.lifecycle.name": "ftgo-logs-dev"
     }
   }
 }' && echo ""
