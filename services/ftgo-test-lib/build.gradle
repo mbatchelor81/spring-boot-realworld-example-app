@@ -1,0 +1,94 @@
+plugins {
+    id 'java-library'
+    id 'io.spring.dependency-management'
+    id 'jacoco'
+}
+
+group = 'com.ftgo'
+version = '1.0.0'
+sourceCompatibility = '11'
+targetCompatibility = '11'
+
+repositories {
+    mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:2.6.3'
+    }
+}
+
+dependencies {
+    // FTGO domain dependencies
+    api project(':services:ftgo-common')
+    api project(':services:ftgo-domain')
+
+    // Spring Boot Test
+    api 'org.springframework.boot:spring-boot-starter-test:2.6.3'
+    api 'org.springframework.security:spring-security-test:5.6.1'
+    api 'org.springframework.security:spring-security-config:5.6.1'
+    api 'org.springframework.security:spring-security-web:5.6.1'
+    api 'org.springframework:spring-webmvc:5.3.15'
+    api 'javax.servlet:javax.servlet-api:4.0.1'
+
+    // JUnit 5
+    api platform('org.junit:junit-bom:5.10.2')
+    api 'org.junit.jupiter:junit-jupiter'
+    api 'org.junit.platform:junit-platform-launcher'
+
+    // Assertion libraries
+    api 'org.assertj:assertj-core:3.25.3'
+
+    // Mocking
+    api 'org.mockito:mockito-core:5.11.0'
+    api 'org.mockito:mockito-junit-jupiter:5.11.0'
+
+    // REST Assured (4.5.x to stay compatible with Spring Boot 2.6.x Groovy 3.x)
+    api 'io.rest-assured:rest-assured:4.5.1'
+    api 'io.rest-assured:spring-mock-mvc:4.5.1'
+
+    // Testcontainers
+    api 'org.testcontainers:testcontainers:1.19.7'
+    api 'org.testcontainers:junit-jupiter:1.19.7'
+    api 'org.testcontainers:mysql:1.19.7'
+
+    // Spring Data JPA (for DynamicPropertySource)
+    compileOnly 'org.springframework.boot:spring-boot-autoconfigure:2.6.3'
+    compileOnly 'org.springframework:spring-test:5.3.15'
+
+    // Test this library itself
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.assertj:assertj-core:3.25.3'
+}
+
+jacoco {
+    toolVersion = '0.8.12'
+}
+
+test {
+    useJUnitPlatform()
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showExceptions true
+        showCauses true
+        showStackTraces true
+    }
+
+    reports {
+        junitXml.required = true
+        html.required = true
+    }
+
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+}
