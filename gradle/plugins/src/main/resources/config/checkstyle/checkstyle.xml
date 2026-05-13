@@ -15,6 +15,12 @@
         <property name="files" value="build[\\/]generated"/>
     </module>
 
+    <!-- Allow underscored method names in test files (e.g. createOrder_validInput_returnsCreated) -->
+    <module name="SuppressionSingleFilter">
+        <property name="files" value="[\\/]test[\\/]"/>
+        <property name="checks" value="MethodName"/>
+    </module>
+
     <!-- File-level checks -->
     <module name="FileTabCharacter">
         <property name="eachLine" value="true"/>

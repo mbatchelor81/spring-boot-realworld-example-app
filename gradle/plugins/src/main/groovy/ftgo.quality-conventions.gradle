@@ -66,7 +66,9 @@ tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
         xml.required = true
         html.required = true
     }
-    // Exclude generated code using fileTree filter on individual class files
+}
+
+tasks.named('spotbugsMain') {
     afterEvaluate {
         classes = files(project.sourceSets.main.output.classesDirs.files.collect {
             fileTree(dir: it, exclude: ['**/generated/**', '**/types/**'])
