@@ -52,7 +52,6 @@ jobs:
           ./gradlew \
             :services:ftgo-common:clean \
             :services:ftgo-common:build \
-            :services:ftgo-common:test \
             -x jacocoTestCoverageVerification \
             -x spotlessCheck
 

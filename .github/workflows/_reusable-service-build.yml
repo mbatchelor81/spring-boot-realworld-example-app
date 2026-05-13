@@ -44,11 +44,12 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build & Test
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
         run: |
           ./gradlew \
-            ${{ inputs.service-path }}:clean \
-            ${{ inputs.service-path }}:build \
-            ${{ inputs.service-path }}:test \
+            "${SERVICE_PATH}:clean" \
+            "${SERVICE_PATH}:build" \
             -x jacocoTestCoverageVerification \
             -x spotlessCheck
 
