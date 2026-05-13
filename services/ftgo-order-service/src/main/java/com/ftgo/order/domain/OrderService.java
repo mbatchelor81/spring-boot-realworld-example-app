@@ -8,21 +8,21 @@ import org.springframework.stereotype.Service;
 public class OrderService {
 
   @PreAuthorize("hasRole('CUSTOMER')")
-  public Long createOrder(String consumerId, Long restaurantId) {
+  public Long createOrder(Long restaurantId) {
     return 1L;
   }
 
-  @PreAuthorize(
-      "hasRole('CUSTOMER') and @resourceOwnershipEvaluator.isOwnerOrAdmin("
-          + "authentication, #consumerId)")
-  public void cancelOrder(Long orderId, String consumerId) {
+  // TODO: Add ownership validation when database layer is implemented.
+  // Pattern: look up order's consumerId from DB, then use
+  // @resourceOwnershipEvaluator.isOwnerOrAdmin(authentication, #ownerFromDb)
+  @PreAuthorize("hasRole('CUSTOMER')")
+  public void cancelOrder(Long orderId) {
     // cancel order logic
   }
 
-  @PreAuthorize(
-      "hasRole('CUSTOMER') and @resourceOwnershipEvaluator.isOwnerOrAdmin("
-          + "authentication, #consumerId)")
-  public void reviseOrder(Long orderId, String consumerId) {
+  // TODO: Add ownership validation when database layer is implemented.
+  @PreAuthorize("hasRole('CUSTOMER')")
+  public void reviseOrder(Long orderId) {
     // revise order logic
   }
 

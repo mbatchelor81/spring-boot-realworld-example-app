@@ -16,10 +16,11 @@ public class RestaurantService {
     return null;
   }
 
-  @PreAuthorize(
-      "hasRole('RESTAURANT_OWNER') and @resourceOwnershipEvaluator.isOwnerOrAdmin("
-          + "authentication, #ownerId)")
-  public void reviseMenu(Long restaurantId, String ownerId) {
+  // TODO: Add ownership validation when database layer is implemented.
+  // Pattern: look up restaurant's ownerId from DB, then use
+  // @resourceOwnershipEvaluator.isOwnerOrAdmin(authentication, #ownerFromDb)
+  @PreAuthorize("hasRole('RESTAURANT_OWNER')")
+  public void reviseMenu(Long restaurantId) {
     // revise menu logic
   }
 }

@@ -1,7 +1,6 @@
 package com.ftgo.courier.api;
 
 import com.ftgo.courier.domain.CourierService;
-import com.ftgo.security.jwt.FtgoUserContext;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,8 +46,7 @@ public class CourierController {
   @PutMapping("/{courierId}/availability")
   @PreAuthorize("hasRole('COURIER')")
   public ResponseEntity<Void> updateAvailability(@PathVariable Long courierId) {
-    String userId = FtgoUserContext.getUserId().orElse("unknown");
-    courierService.updateAvailability(userId, true);
+    courierService.updateAvailability(courierId, true);
     return ResponseEntity.ok().build();
   }
 }

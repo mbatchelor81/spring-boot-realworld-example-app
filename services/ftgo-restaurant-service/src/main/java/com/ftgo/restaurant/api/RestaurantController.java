@@ -1,7 +1,6 @@
 package com.ftgo.restaurant.api;
 
 import com.ftgo.restaurant.domain.RestaurantService;
-import com.ftgo.security.jwt.FtgoUserContext;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,8 +39,7 @@ public class RestaurantController {
   @PutMapping("/{restaurantId}/menu")
   @PreAuthorize("hasRole('RESTAURANT_OWNER')")
   public ResponseEntity<Void> reviseMenu(@PathVariable Long restaurantId) {
-    String ownerId = FtgoUserContext.getUserId().orElse("unknown");
-    restaurantService.reviseMenu(restaurantId, ownerId);
+    restaurantService.reviseMenu(restaurantId);
     return ResponseEntity.ok().build();
   }
 }

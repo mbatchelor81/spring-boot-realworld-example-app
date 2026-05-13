@@ -16,10 +16,11 @@ public class CourierService {
     // plan delivery logic
   }
 
-  @PreAuthorize(
-      "hasRole('COURIER') and @resourceOwnershipEvaluator.isOwnerOrAdmin("
-          + "authentication, #courierId)")
-  public void updateAvailability(String courierId, boolean available) {
+  // TODO: Add ownership validation when database layer is implemented.
+  // Pattern: look up courier's ownerId from DB, then use
+  // @resourceOwnershipEvaluator.isOwnerOrAdmin(authentication, #ownerFromDb)
+  @PreAuthorize("hasRole('COURIER')")
+  public void updateAvailability(Long courierId, boolean available) {
     // update availability logic
   }
 

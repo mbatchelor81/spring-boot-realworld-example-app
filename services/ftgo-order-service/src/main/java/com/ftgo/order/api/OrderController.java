@@ -1,7 +1,6 @@
 package com.ftgo.order.api;
 
 import com.ftgo.order.domain.OrderService;
-import com.ftgo.security.jwt.FtgoUserContext;
 import java.time.LocalDateTime;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -28,8 +27,7 @@ public class OrderController {
   @PostMapping
   @PreAuthorize("hasRole('CUSTOMER')")
   public ResponseEntity<Map<String, Object>> createOrder() {
-    String userId = FtgoUserContext.getUserId().orElse("unknown");
-    Long orderId = orderService.createOrder(userId, 1L);
+    Long orderId = orderService.createOrder(1L);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(Map.of("orderId", orderId, "status", "CREATED"));
   }
@@ -43,8 +41,7 @@ public class OrderController {
   @DeleteMapping("/{orderId}")
   @PreAuthorize("hasRole('CUSTOMER')")
   public ResponseEntity<Void> cancelOrder(@PathVariable Long orderId) {
-    String consumerId = FtgoUserContext.getUserId().orElse("unknown");
-    orderService.cancelOrder(orderId, consumerId);
+    orderService.cancelOrder(orderId);
     return ResponseEntity.noContent().build();
   }
 
