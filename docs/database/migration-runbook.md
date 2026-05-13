@@ -143,14 +143,16 @@ SELECT restaurant_id, id, name, price FROM ftgo.restaurant_menu_items;
 -- Order data
 INSERT INTO ftgo_order_db.orders (
     id, version, order_state, consumer_id, restaurant_id,
-    delivery_street1, delivery_street2, delivery_city, delivery_state, delivery_zip,
+    delivery_address_street1, delivery_address_street2, delivery_address_city,
+    delivery_address_state, delivery_address_zip,
     delivery_time, payment_token, order_minimum, ready_by, accept_time,
     preparing_time, ready_for_pickup_time, picked_up_time, delivered_time,
     assigned_courier_id
 )
 SELECT
     id, version, order_state, consumer_id, restaurant_id,
-    delivery_street1, delivery_street2, delivery_city, delivery_state, delivery_zip,
+    delivery_address_street1, delivery_address_street2, delivery_address_city,
+    delivery_address_state, delivery_address_zip,
     delivery_time, payment_token, order_minimum, ready_by, accept_time,
     preparing_time, ready_for_pickup_time, picked_up_time, delivered_time,
     assigned_courier_id

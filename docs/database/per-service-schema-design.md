@@ -85,11 +85,11 @@ orders
 ├── order_state           VARCHAR(30) NOT NULL
 ├── consumer_id           BIGINT NOT NULL          ← no FK (cross-service)
 ├── restaurant_id         BIGINT NOT NULL          ← no FK (cross-service)
-├── delivery_street1      VARCHAR(255)
-├── delivery_street2      VARCHAR(255)
-├── delivery_city         VARCHAR(255)
-├── delivery_state        VARCHAR(255)
-├── delivery_zip          VARCHAR(20)
+├── delivery_address_street1 VARCHAR(255)
+├── delivery_address_street2 VARCHAR(255)
+├── delivery_address_city    VARCHAR(255)
+├── delivery_address_state   VARCHAR(255)
+├── delivery_address_zip     VARCHAR(20)
 ├── delivery_time         TIMESTAMP
 ├── payment_token         VARCHAR(255)
 ├── order_minimum         DECIMAL(19,2)

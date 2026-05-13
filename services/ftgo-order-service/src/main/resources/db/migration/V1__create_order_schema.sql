@@ -20,12 +20,12 @@ CREATE TABLE orders (
     -- Reference to ftgo-restaurant-service (no FK)
     restaurant_id         BIGINT NOT NULL,
 
-    -- Embedded DeliveryInformation
-    delivery_street1      VARCHAR(255),
-    delivery_street2      VARCHAR(255),
-    delivery_city         VARCHAR(255),
-    delivery_state        VARCHAR(255),
-    delivery_zip          VARCHAR(20),
+    -- Embedded DeliveryInformation (Address via @AttributeOverride)
+    delivery_address_street1 VARCHAR(255),
+    delivery_address_street2 VARCHAR(255),
+    delivery_address_city    VARCHAR(255),
+    delivery_address_state   VARCHAR(255),
+    delivery_address_zip     VARCHAR(20),
     delivery_time         TIMESTAMP,
 
     -- Embedded PaymentInformation
