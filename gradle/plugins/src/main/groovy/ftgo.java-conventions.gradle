@@ -1,0 +1,46 @@
+// ---------------------------------------------------------------------------
+// ftgo.java-conventions
+// ---------------------------------------------------------------------------
+// Base Java configuration shared by every FTGO microservice module.
+// Sets Java 17 source/target, common compiler options, and repositories.
+// ---------------------------------------------------------------------------
+
+plugins {
+    id 'java'
+}
+
+group = 'com.ftgo'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['-parameters', '-Xlint:deprecation'])
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+// Spotless code formatting (Google Java Format)
+apply plugin: 'com.diffplug.spotless'
+
+spotless {
+    java {
+        target project.fileTree(project.projectDir) {
+            include '**/*.java'
+            exclude 'build/generated/**/*.*'
+        }
+        googleJavaFormat()
+    }
+}

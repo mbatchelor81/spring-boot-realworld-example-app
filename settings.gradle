@@ -1,4 +1,9 @@
 pluginManagement {
+    // Convention plugins for microservices (Spring Boot 3.x / Java 17+).
+    // The monolith root project does NOT apply these; it keeps its own
+    // Spring Boot 2.6.3 declarations in build.gradle.
+    includeBuild 'gradle/plugins'
+
     plugins {
         id 'org.springframework.boot' version '2.6.3'
         id 'io.spring.dependency-management' version '1.0.11.RELEASE'

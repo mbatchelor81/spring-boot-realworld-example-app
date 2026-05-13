@@ -1,0 +1,38 @@
+// ---------------------------------------------------------------------------
+// ftgo.spring-boot-conventions
+// ---------------------------------------------------------------------------
+// Applies Spring Boot 3.x and dependency management to a microservice.
+// Automatically includes ftgo.java-conventions.
+// ---------------------------------------------------------------------------
+
+plugins {
+    id 'ftgo.java-conventions'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "io.micrometer:micrometer-bom:${libs.versions.micrometer.get()}"
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    compileOnly "org.projectlombok:lombok:${libs.versions.lombok.get()}"
+    annotationProcessor "org.projectlombok:lombok:${libs.versions.lombok.get()}"
+}
+
+// Disable the plain jar in favour of the Boot fat-jar.
+tasks.named('jar') {
+    enabled = false
+}
+
+bootJar {
+    archiveClassifier.set('')
+}
+
+springBoot {
+    buildInfo()
+}

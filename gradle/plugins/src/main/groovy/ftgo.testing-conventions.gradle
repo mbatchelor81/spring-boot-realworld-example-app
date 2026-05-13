@@ -1,0 +1,35 @@
+// ---------------------------------------------------------------------------
+// ftgo.testing-conventions
+// ---------------------------------------------------------------------------
+// Standardized test configuration for FTGO microservices.
+// Uses JUnit 5 Platform, configures test logging, and provides common
+// testing dependencies.
+// ---------------------------------------------------------------------------
+
+plugins {
+    id 'java'
+}
+
+dependencies {
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+
+    testImplementation "io.rest-assured:rest-assured:${libs.versions.rest.assured.get()}"
+    testImplementation "io.rest-assured:spring-mock-mvc:${libs.versions.rest.assured.get()}"
+
+    testImplementation "org.assertj:assertj-core:${libs.versions.assertj.get()}"
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showExceptions true
+        showCauses true
+        showStackTraces true
+    }
+
+    // Ensure tests always run when requested
+    outputs.upToDateWhen { false }
+}

@@ -1,0 +1,45 @@
+// ---------------------------------------------------------------------------
+// ftgo.publishing-conventions
+// ---------------------------------------------------------------------------
+// Configures Maven publishing for FTGO library modules (e.g., API modules,
+// ftgo-common). Service applications typically do NOT apply this plugin —
+// they produce boot JARs / Docker images instead.
+// ---------------------------------------------------------------------------
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            pom {
+                name = project.name
+                description = "FTGO shared library: ${project.name}"
+                url = 'https://github.com/mbatchelor81/spring-boot-realworld-example-app'
+
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = rootProject.layout.buildDirectory.dir('maven-repo')
+        }
+    }
+}

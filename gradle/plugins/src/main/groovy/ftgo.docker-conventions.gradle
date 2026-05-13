@@ -1,0 +1,69 @@
+// ---------------------------------------------------------------------------
+// ftgo.docker-conventions
+// ---------------------------------------------------------------------------
+// Provides Dockerfile generation and Docker image build tasks for
+// FTGO microservices. Expects the applying project to also apply
+// ftgo.spring-boot-conventions (for bootJar).
+// ---------------------------------------------------------------------------
+
+plugins {
+    id 'java'
+}
+
+def dockerDir = layout.buildDirectory.dir('docker')
+
+tasks.register('prepareDocker', Copy) {
+    description = 'Copies the boot JAR and Dockerfile into build/docker for image building.'
+    group = 'docker'
+
+    dependsOn tasks.named('bootJar')
+
+    from(tasks.named('bootJar')) {
+        rename { 'app.jar' }
+    }
+
+    def projectDockerDir = file("${project.projectDir}/docker")
+    if (projectDockerDir.exists()) {
+        from(projectDockerDir)
+    }
+
+    into dockerDir
+}
+
+tasks.register('generateDockerfile') {
+    description = 'Generates a default Dockerfile if one does not exist in docker/.'
+    group = 'docker'
+
+    def outputFile = dockerDir.map { it.file('Dockerfile') }
+    outputs.file(outputFile)
+
+    doLast {
+        def df = outputFile.get().asFile
+        if (!df.exists()) {
+            df.text = """\
+                |FROM eclipse-temurin:17-jre-alpine
+                |
+                |RUN addgroup -S ftgo && adduser -S ftgo -G ftgo
+                |USER ftgo
+                |
+                |WORKDIR /app
+                |COPY app.jar app.jar
+                |
+                |EXPOSE 8080
+                |ENTRYPOINT ["java", "-jar", "app.jar"]
+                |""".stripMargin()
+        }
+    }
+}
+
+tasks.register('dockerBuild', Exec) {
+    description = 'Builds a Docker image for this service.'
+    group = 'docker'
+
+    dependsOn 'prepareDocker', 'generateDockerfile'
+
+    workingDir dockerDir
+
+    def imageName = "ftgo/${project.name}:${project.version}"
+    commandLine 'docker', 'build', '-t', imageName, '.'
+}
