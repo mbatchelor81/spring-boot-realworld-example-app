@@ -1,6 +1,7 @@
 package com.ftgo.logging;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -28,5 +29,12 @@ public class LoggingAutoConfiguration {
     registration.addUrlPatterns("/*");
     registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
     return registration;
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  @ConditionalOnClass(name = "org.aspectj.lang.ProceedingJoinPoint")
+  public LoggingAspect loggingAspect() {
+    return new LoggingAspect();
   }
 }

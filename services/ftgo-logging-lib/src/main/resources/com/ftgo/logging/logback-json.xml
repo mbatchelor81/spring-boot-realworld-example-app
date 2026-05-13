@@ -12,11 +12,15 @@
       <includeMdcKeyName>spanId</includeMdcKeyName>
       <includeMdcKeyName>correlationId</includeMdcKeyName>
       <includeMdcKeyName>serviceName</includeMdcKeyName>
+      <includeMdcKeyName>userId</includeMdcKeyName>
+      <includeMdcKeyName>requestId</includeMdcKeyName>
       <fieldNames>
         <timestamp>@timestamp</timestamp>
         <version>[ignore]</version>
         <levelValue>[ignore]</levelValue>
+        <message>[ignore]</message>
       </fieldNames>
+      <provider class="com.ftgo.logging.MaskingMessageProvider"/>
       <timeZone>UTC</timeZone>
       <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
     </encoder>

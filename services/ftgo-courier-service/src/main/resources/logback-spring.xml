@@ -1,28 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
   <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
-  <include resource="com/ftgo/logging/logback-json.xml"/>
+  <include resource="com/ftgo/logging/logback-shared.xml"/>
 
-  <property name="LOG_PATTERN"
-            value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-},%X{spanId:-}] %-5level %logger{36} - %msg%n"/>
-
-  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder>
-      <pattern>${LOG_PATTERN}</pattern>
-    </encoder>
-  </appender>
-
-  <!-- Structured JSON via async appender for containerised environments -->
-  <springProfile name="docker | k8s | prod | staging">
-    <root level="INFO">
+  <!-- ============================================================ -->
+  <!-- Production: JSON structured logging via async appender        -->
+  <!-- ============================================================ -->
+  <springProfile name="prod">
+    <logger name="com.ftgo" level="INFO"/>
+    <logger name="org.springframework" level="ERROR"/>
+    <logger name="org.hibernate" level="ERROR"/>
+    <root level="WARN">
       <appender-ref ref="ASYNC_JSON"/>
     </root>
   </springProfile>
 
-  <!-- Plain text for local dev, test, and any other profile -->
+  <!-- ============================================================ -->
+  <!-- Staging / Docker / K8s: JSON structured logging               -->
+  <!-- ============================================================ -->
+  <springProfile name="staging | docker | k8s">
+    <logger name="com.ftgo" level="INFO"/>
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
+    <root level="WARN">
+      <appender-ref ref="ASYNC_JSON"/>
+    </root>
+  </springProfile>
+
+  <!-- ============================================================ -->
+  <!-- Local development: human-readable console + rolling file      -->
+  <!-- ============================================================ -->
   <springProfile name="!docker, !k8s, !prod, !staging">
+    <logger name="com.ftgo" level="DEBUG"/>
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="org.hibernate" level="INFO"/>
     <root level="INFO">
-      <appender-ref ref="CONSOLE"/>
+      <appender-ref ref="MASKED_CONSOLE"/>
+      <appender-ref ref="FILE"/>
     </root>
   </springProfile>
 </configuration>
