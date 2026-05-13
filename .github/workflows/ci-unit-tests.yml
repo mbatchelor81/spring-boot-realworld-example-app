@@ -8,24 +8,6 @@ name: CI — Unit Tests
 
 on:
   workflow_call:
-  push:
-    branches: [main, feat/microservices-migration]
-    paths:
-      - 'services/**'
-      - 'gradle/**'
-      - 'settings.gradle'
-      - 'gradlew'
-      - 'gradlew.bat'
-      - '.github/workflows/ci-unit-tests.yml'
-  pull_request:
-    branches: [main, feat/microservices-migration]
-    paths:
-      - 'services/**'
-      - 'gradle/**'
-      - 'settings.gradle'
-      - 'gradlew'
-      - 'gradlew.bat'
-      - '.github/workflows/ci-unit-tests.yml'
 
 jobs:
   unit-tests:

@@ -8,24 +8,6 @@ name: CI — Integration Tests
 
 on:
   workflow_call:
-  push:
-    branches: [main, feat/microservices-migration]
-    paths:
-      - 'services/**'
-      - 'gradle/**'
-      - 'settings.gradle'
-      - 'gradlew'
-      - 'gradlew.bat'
-      - '.github/workflows/ci-integration-tests.yml'
-  pull_request:
-    branches: [main, feat/microservices-migration]
-    paths:
-      - 'services/**'
-      - 'gradle/**'
-      - 'settings.gradle'
-      - 'gradlew'
-      - 'gradlew.bat'
-      - '.github/workflows/ci-integration-tests.yml'
 
 jobs:
   integration-tests:
