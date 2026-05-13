@@ -15,7 +15,7 @@ done
 echo "Elasticsearch is ready. Configuring ILM policies..."
 
 # Dev: 7 days retention
-curl -sf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-dev" -H 'Content-Type: application/json' -d '{
+curl -sSf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-dev" -H 'Content-Type: application/json' -d '{
   "policy": {
     "phases": {
       "hot": {
@@ -32,7 +32,7 @@ curl -sf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-dev" -H 'Content-Type: applicati
 }' && echo ""
 
 # Staging: 30 days retention
-curl -sf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-staging" -H 'Content-Type: application/json' -d '{
+curl -sSf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-staging" -H 'Content-Type: application/json' -d '{
   "policy": {
     "phases": {
       "hot": {
@@ -43,8 +43,7 @@ curl -sf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-staging" -H 'Content-Type: appli
       "warm": {
         "min_age": "7d",
         "actions": {
-          "forcemerge": { "max_num_segments": 1 },
-          "shrink": { "number_of_shards": 1 }
+          "forcemerge": { "max_num_segments": 1 }
         }
       },
       "delete": {
@@ -56,7 +55,7 @@ curl -sf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-staging" -H 'Content-Type: appli
 }' && echo ""
 
 # Prod: 90 days retention
-curl -sf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-prod" -H 'Content-Type: application/json' -d '{
+curl -sSf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-prod" -H 'Content-Type: application/json' -d '{
   "policy": {
     "phases": {
       "hot": {
@@ -67,8 +66,7 @@ curl -sf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-prod" -H 'Content-Type: applicat
       "warm": {
         "min_age": "7d",
         "actions": {
-          "forcemerge": { "max_num_segments": 1 },
-          "shrink": { "number_of_shards": 1 }
+          "forcemerge": { "max_num_segments": 1 }
         }
       },
       "cold": {
@@ -86,7 +84,7 @@ curl -sf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-prod" -H 'Content-Type: applicat
 }' && echo ""
 
 # Index template for ftgo-logs
-curl -sf -X PUT "$ES_HOST/_index_template/ftgo-logs" -H 'Content-Type: application/json' -d '{
+curl -sSf -X PUT "$ES_HOST/_index_template/ftgo-logs" -H 'Content-Type: application/json' -d '{
   "index_patterns": ["ftgo-logs-*"],
   "template": {
     "settings": {

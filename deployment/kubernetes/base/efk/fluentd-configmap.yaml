@@ -35,6 +35,7 @@ data:
       key_name log
       reserve_data true
       remove_key_name_field true
+      emit_invalid_record_to_error true
       <parse>
         @type json
         time_key @timestamp

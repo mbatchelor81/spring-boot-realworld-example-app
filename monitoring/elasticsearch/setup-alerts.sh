@@ -3,7 +3,7 @@
 # Elasticsearch Watcher — log-based alerts for error spikes
 # ---------------------------------------------------------------------------
 # Run this script after Elasticsearch is ready to configure alerting.
-# Requires Elasticsearch with at least basic license for Watcher.
+# Requires Elasticsearch with a Gold or Platinum license for Watcher.
 #
 # For local dev without Watcher, these alerts are also configured as
 # Prometheus alerting rules in monitoring/prometheus/alerting-rules.yml.
@@ -21,7 +21,7 @@ echo "Elasticsearch is ready. Configuring alerts..."
 # ---------------------------------------------------------------------------
 # Alert: Error rate spike — fires when > 50 ERROR logs in 5 minutes
 # ---------------------------------------------------------------------------
-curl -sf -X PUT "$ES_HOST/_watcher/watch/ftgo-error-spike" \
+curl -sSf -X PUT "$ES_HOST/_watcher/watch/ftgo-error-spike" \
   -H 'Content-Type: application/json' -d '{
   "trigger": {
     "schedule": { "interval": "5m" }
@@ -64,7 +64,7 @@ curl -sf -X PUT "$ES_HOST/_watcher/watch/ftgo-error-spike" \
 # ---------------------------------------------------------------------------
 # Alert: Service logging stopped — fires when a service has 0 logs in 10m
 # ---------------------------------------------------------------------------
-curl -sf -X PUT "$ES_HOST/_watcher/watch/ftgo-logging-stopped" \
+curl -sSf -X PUT "$ES_HOST/_watcher/watch/ftgo-logging-stopped" \
   -H 'Content-Type: application/json' -d '{
   "trigger": {
     "schedule": { "interval": "10m" }
