@@ -20,7 +20,7 @@
   </springProfile>
 
   <!-- Plain text for local dev, test, and any other profile -->
-  <springProfile name="!docker & !k8s & !prod & !staging">
+  <springProfile name="!docker, !k8s, !prod, !staging">
     <root level="INFO">
       <appender-ref ref="CONSOLE"/>
     </root>

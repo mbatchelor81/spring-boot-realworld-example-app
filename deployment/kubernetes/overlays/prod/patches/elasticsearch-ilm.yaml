@@ -14,7 +14,7 @@ data:
       "policy": {
         "phases": {
           "hot": { "min_age": "0ms", "actions": {} },
-          "warm": { "min_age": "7d", "actions": { "forcemerge": { "max_num_segments": 1 }, "shrink": { "number_of_shards": 1 } } },
+          "warm": { "min_age": "7d", "actions": { "forcemerge": { "max_num_segments": 1 } } },
           "cold": { "min_age": "30d", "actions": { "allocate": { "number_of_replicas": 0 } } },
           "delete": { "min_age": "90d", "actions": { "delete": {} } }
         }

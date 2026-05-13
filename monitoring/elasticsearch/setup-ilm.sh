@@ -43,8 +43,7 @@ curl -sSf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-staging" -H 'Content-Type: appl
       "warm": {
         "min_age": "7d",
         "actions": {
-          "forcemerge": { "max_num_segments": 1 },
-          "shrink": { "number_of_shards": 1 }
+          "forcemerge": { "max_num_segments": 1 }
         }
       },
       "delete": {
@@ -67,8 +66,7 @@ curl -sSf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-prod" -H 'Content-Type: applica
       "warm": {
         "min_age": "7d",
         "actions": {
-          "forcemerge": { "max_num_segments": 1 },
-          "shrink": { "number_of_shards": 1 }
+          "forcemerge": { "max_num_segments": 1 }
         }
       },
       "cold": {

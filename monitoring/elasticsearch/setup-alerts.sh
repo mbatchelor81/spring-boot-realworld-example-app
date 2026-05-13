@@ -3,7 +3,7 @@
 # Elasticsearch Watcher — log-based alerts for error spikes
 # ---------------------------------------------------------------------------
 # Run this script after Elasticsearch is ready to configure alerting.
-# Requires Elasticsearch with at least basic license for Watcher.
+# Requires Elasticsearch with a Gold or Platinum license for Watcher.
 #
 # For local dev without Watcher, these alerts are also configured as
 # Prometheus alerting rules in monitoring/prometheus/alerting-rules.yml.
