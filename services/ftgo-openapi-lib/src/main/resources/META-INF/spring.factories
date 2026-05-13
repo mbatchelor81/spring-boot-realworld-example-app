@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.ftgo.openapi.config.FtgoOpenApiAutoConfiguration,\
+  com.ftgo.openapi.config.SwaggerUiConfiguration

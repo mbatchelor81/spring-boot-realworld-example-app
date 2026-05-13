@@ -15,3 +15,18 @@ management:
     web:
       exposure:
         include: health,info,metrics
+
+ftgo:
+  openapi:
+    title: Restaurant Service API
+    description: Manages restaurant onboarding, menus, and order acceptance
+    version: 1.0.0
+    server-url: http://localhost:8082
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs

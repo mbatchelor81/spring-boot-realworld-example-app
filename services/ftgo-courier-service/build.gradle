@@ -15,6 +15,7 @@ repositories {
 
 dependencies {
     implementation project(':services:ftgo-common')
+    implementation project(':services:ftgo-openapi-lib')
     implementation project(':services:ftgo-courier-service-api')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
