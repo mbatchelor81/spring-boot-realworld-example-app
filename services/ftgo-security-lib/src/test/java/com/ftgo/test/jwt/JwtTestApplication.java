@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +29,9 @@ public class JwtTestApplication {
   public JwtDecoder jwtDecoder(JwtTokenProvider tokenProvider) {
     try {
       RSAPublicKey publicKey = tokenProvider.getRsaKey().toRSAPublicKey();
-      return NimbusJwtDecoder.withPublicKey(publicKey).build();
+      NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(publicKey).build();
+      decoder.setJwtValidator(new JwtTimestampValidator());
+      return decoder;
     } catch (com.nimbusds.jose.JOSEException e) {
       throw new IllegalStateException("Failed to build JwtDecoder", e);
     }

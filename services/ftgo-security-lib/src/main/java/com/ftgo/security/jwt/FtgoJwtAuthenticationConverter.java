@@ -52,19 +52,22 @@ public class FtgoJwtAuthenticationConverter implements Converter<Jwt, AbstractAu
       }
     }
 
+    String prefix = jwtProperties.getRolePrefix();
+    List<GrantedAuthority> authorities =
+        roles.stream()
+            .map(role -> role.startsWith(prefix) ? role : prefix + role)
+            .map(SimpleGrantedAuthority::new)
+            .collect(Collectors.toList());
+
     Object scopeClaim = jwt.getClaim("scope");
     if (scopeClaim instanceof String) {
       String[] scopes = ((String) scopeClaim).split("\\s+");
       for (String scope : scopes) {
-        roles.add("SCOPE_" + scope);
+        authorities.add(new SimpleGrantedAuthority("SCOPE_" + scope));
       }
     }
 
-    String prefix = jwtProperties.getRolePrefix();
-    return roles.stream()
-        .map(role -> role.startsWith(prefix) ? role : prefix + role)
-        .map(SimpleGrantedAuthority::new)
-        .collect(Collectors.toList());
+    return authorities;
   }
 
   @SuppressWarnings("unchecked")
