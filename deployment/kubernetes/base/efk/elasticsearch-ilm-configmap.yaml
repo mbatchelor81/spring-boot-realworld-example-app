@@ -23,7 +23,7 @@ data:
     # ---------------------------------------------------------------------------
 
     # Dev: 7 days retention
-    curl -sf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-dev" -H 'Content-Type: application/json' -d '{
+    curl -sSf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-dev" -H 'Content-Type: application/json' -d '{
       "policy": {
         "phases": {
           "hot": {
@@ -40,7 +40,7 @@ data:
     echo ""
 
     # Staging: 30 days retention
-    curl -sf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-staging" -H 'Content-Type: application/json' -d '{
+    curl -sSf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-staging" -H 'Content-Type: application/json' -d '{
       "policy": {
         "phases": {
           "hot": {
@@ -64,7 +64,7 @@ data:
     echo ""
 
     # Prod: 90 days retention
-    curl -sf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-prod" -H 'Content-Type: application/json' -d '{
+    curl -sSf -X PUT "$ES_HOST/_ilm/policy/ftgo-logs-prod" -H 'Content-Type: application/json' -d '{
       "policy": {
         "phases": {
           "hot": {
@@ -97,7 +97,7 @@ data:
     # Index Templates — bind ILM policy based on index prefix
     # ---------------------------------------------------------------------------
 
-    curl -sf -X PUT "$ES_HOST/_index_template/ftgo-logs" -H 'Content-Type: application/json' -d '{
+    curl -sSf -X PUT "$ES_HOST/_index_template/ftgo-logs" -H 'Content-Type: application/json' -d '{
       "index_patterns": ["ftgo-logs-*"],
       "template": {
         "settings": {

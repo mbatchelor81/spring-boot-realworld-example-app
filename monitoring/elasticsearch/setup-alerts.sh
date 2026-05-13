@@ -21,7 +21,7 @@ echo "Elasticsearch is ready. Configuring alerts..."
 # ---------------------------------------------------------------------------
 # Alert: Error rate spike — fires when > 50 ERROR logs in 5 minutes
 # ---------------------------------------------------------------------------
-curl -sf -X PUT "$ES_HOST/_watcher/watch/ftgo-error-spike" \
+curl -sSf -X PUT "$ES_HOST/_watcher/watch/ftgo-error-spike" \
   -H 'Content-Type: application/json' -d '{
   "trigger": {
     "schedule": { "interval": "5m" }
@@ -64,7 +64,7 @@ curl -sf -X PUT "$ES_HOST/_watcher/watch/ftgo-error-spike" \
 # ---------------------------------------------------------------------------
 # Alert: Service logging stopped — fires when a service has 0 logs in 10m
 # ---------------------------------------------------------------------------
-curl -sf -X PUT "$ES_HOST/_watcher/watch/ftgo-logging-stopped" \
+curl -sSf -X PUT "$ES_HOST/_watcher/watch/ftgo-logging-stopped" \
   -H 'Content-Type: application/json' -d '{
   "trigger": {
     "schedule": { "interval": "10m" }
