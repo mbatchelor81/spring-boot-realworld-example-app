@@ -39,6 +39,13 @@ mockito             = "5.11.0"
 assertj             = "3.25.3"
 testcontainers      = "1.19.7"
 
+# --- Static Analysis ---
+checkstyle           = "10.14.2"
+spotbugs-plugin      = "6.0.9"
+spotbugs             = "4.8.4"
+pmd                  = "6.55.0"
+jacoco               = "0.8.12"
+
 # --- Build plugins ---
 spotless             = "6.25.0"
 dgs-codegen          = "6.1.0"
@@ -118,3 +125,4 @@ spring-boot          = { id = "org.springframework.boot",          version.ref =
 spring-dependency    = { id = "io.spring.dependency-management",   version.ref = "spring-dependency" }
 spotless             = { id = "com.diffplug.spotless",             version.ref = "spotless" }
 dgs-codegen          = { id = "com.netflix.dgs.codegen",           version.ref = "dgs-codegen" }
+spotbugs             = { id = "com.github.spotbugs",               version.ref = "spotbugs-plugin" }

@@ -1,0 +1,124 @@
+// ---------------------------------------------------------------------------
+// ftgo.quality-conventions
+// ---------------------------------------------------------------------------
+// Static analysis and code coverage for FTGO microservices.
+// Configures Checkstyle, PMD, SpotBugs, and JaCoCo with sensible defaults.
+// ---------------------------------------------------------------------------
+
+plugins {
+    id 'java'
+    id 'checkstyle'
+    id 'pmd'
+    id 'com.github.spotbugs'
+    id 'jacoco'
+}
+
+// ---- Checkstyle -----------------------------------------------------------
+checkstyle {
+    toolVersion = libs.versions.checkstyle.get()
+    configFile = rootProject.file('gradle/plugins/src/main/resources/config/checkstyle/checkstyle.xml')
+    maxWarnings = 0
+    ignoreFailures = false
+}
+
+tasks.withType(Checkstyle).configureEach {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+    // Exclude generated sources
+    source = fileTree(project.projectDir) {
+        include 'src/**/*.java'
+        exclude 'build/generated/**'
+    }
+}
+
+// ---- PMD ------------------------------------------------------------------
+pmd {
+    toolVersion = libs.versions.pmd.get()
+    consoleOutput = true
+    ignoreFailures = false
+    ruleSetFiles = files()
+    ruleSets = [
+        'category/java/bestpractices.xml',
+        'category/java/codestyle.xml',
+        'category/java/design.xml',
+        'category/java/errorprone.xml',
+        'category/java/performance.xml',
+    ]
+}
+
+tasks.withType(Pmd).configureEach {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+    // Exclude generated sources
+    source = fileTree(project.projectDir) {
+        include 'src/**/*.java'
+        exclude 'build/generated/**'
+    }
+}
+
+// ---- SpotBugs -------------------------------------------------------------
+spotbugs {
+    toolVersion = libs.versions.spotbugs.get()
+    effort = 'max'
+    reportLevel = 'medium'
+    ignoreFailures = false
+}
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+    // Exclude generated code
+    classes = files(project.sourceSets.main.output.classesDirs).filter {
+        !it.path.contains('generated')
+    }
+}
+
+// ---- JaCoCo ---------------------------------------------------------------
+jacoco {
+    toolVersion = libs.versions.jacoco.get()
+}
+
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+    // Exclude generated sources from coverage
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: ['**/generated/**', '**/types/**'])
+        }))
+    }
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+    dependsOn tasks.named('jacocoTestReport')
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.70
+            }
+        }
+    }
+    // Exclude generated sources
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: ['**/generated/**', '**/types/**'])
+        }))
+    }
+}
+
+// Wire coverage verification into the check lifecycle
+tasks.named('check') {
+    dependsOn tasks.named('jacocoTestCoverageVerification')
+}
