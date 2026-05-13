@@ -45,7 +45,7 @@ public class CorrelationIdFilter implements GlobalFilter, Ordered {
               mutatedExchange
                   .getResponse()
                   .getHeaders()
-                  .add(CORRELATION_ID_HEADER, finalCorrelationId);
+                  .set(CORRELATION_ID_HEADER, finalCorrelationId);
               return Mono.empty();
             });
 

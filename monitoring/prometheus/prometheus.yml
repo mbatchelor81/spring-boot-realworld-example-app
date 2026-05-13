@@ -33,3 +33,10 @@ scrape_configs:
       - targets: ["ftgo-courier-service:8084"]
         labels:
           service: "courier-service"
+
+  - job_name: "ftgo-api-gateway"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets: ["ftgo-api-gateway:8085"]
+        labels:
+          service: "api-gateway"
