@@ -56,8 +56,11 @@ jobs:
     steps:
       - name: Determine target
         id: path
+        env:
+          INPUT_SOURCE: ${{ github.event.inputs.source_environment }}
+          INPUT_TAG: ${{ github.event.inputs.image_tag }}
         run: |
-          SOURCE="${{ github.event.inputs.source_environment }}"
+          SOURCE="$INPUT_SOURCE"
           case "${SOURCE}" in
             dev)     TARGET="staging" ;;
             staging) TARGET="prod"    ;;
@@ -67,7 +70,7 @@ jobs:
               ;;
           esac
 
-          TAG="${{ github.event.inputs.image_tag }}"
+          TAG="$INPUT_TAG"
           if [[ -z "${TAG}" ]]; then
             TAG="latest"
           fi
@@ -104,11 +107,12 @@ jobs:
           chmod 600 ~/.kube/config
 
       - name: Check source deployments
+        env:
+          NS: ${{ needs.resolve.outputs.source_namespace }}
         run: |
-          NS="${{ needs.resolve.outputs.source_namespace }}"
           echo "Checking deployments in ${NS}..."
           for DEPLOY in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
-            STATUS=$(kubectl get deployment ${DEPLOY} -n ${NS} -o jsonpath='{.status.conditions[?(@.type=="Available")].status}' 2>/dev/null || echo "NotFound")
+            STATUS=$(kubectl get deployment ${DEPLOY} -n "${NS}" -o jsonpath='{.status.conditions[?(@.type=="Available")].status}' 2>/dev/null || echo "NotFound")
             if [[ "${STATUS}" != "True" ]]; then
               echo "::error::Deployment ${DEPLOY} is not healthy in ${NS} (status: ${STATUS})"
               exit 1
@@ -146,38 +150,46 @@ jobs:
           chmod 600 ~/.kube/config
 
       - name: Update image tags
-        working-directory: deployment/kubernetes/overlays/${{ needs.resolve.outputs.target }}
+        env:
+          TARGET_ENV: ${{ needs.resolve.outputs.target }}
+          IMAGE_TAG: ${{ needs.resolve.outputs.image_tag }}
+        working-directory: deployment/kubernetes/overlays
         run: |
-          TAG="${{ needs.resolve.outputs.image_tag }}"
+          cd "$TARGET_ENV"
           for SERVICE in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
-            kustomize edit set image "${{ env.IMAGE_PREFIX }}/${SERVICE}=${{ env.IMAGE_PREFIX }}/${SERVICE}:${TAG}"
+            kustomize edit set image "${{ env.IMAGE_PREFIX }}/${SERVICE}=${{ env.IMAGE_PREFIX }}/${SERVICE}:${IMAGE_TAG}"
           done
 
       - name: Apply manifests
+        env:
+          TARGET_ENV: ${{ needs.resolve.outputs.target }}
+          NS: ${{ needs.resolve.outputs.target_namespace }}
         run: |
-          kustomize build deployment/kubernetes/overlays/${{ needs.resolve.outputs.target }} \
-            | kubectl apply -f - --namespace=${{ needs.resolve.outputs.target_namespace }}
+          kustomize build "deployment/kubernetes/overlays/${TARGET_ENV}" \
+            | kubectl apply -f - --namespace="${NS}"
 
       - name: Wait for rollouts
+        env:
+          NS: ${{ needs.resolve.outputs.target_namespace }}
         run: |
-          NS="${{ needs.resolve.outputs.target_namespace }}"
           for DEPLOY in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
             echo "Waiting for ${DEPLOY} in ${NS}..."
             kubectl rollout status deployment/${DEPLOY} \
-              --namespace=${NS} \
+              --namespace="${NS}" \
               --timeout=300s
           done
 
       - name: Run smoke tests
+        env:
+          NS: ${{ needs.resolve.outputs.target_namespace }}
         run: |
-          NS="${{ needs.resolve.outputs.target_namespace }}"
           echo "Running smoke tests in ${NS}..."
           for SVC in ftgo-consumer-service:8081 ftgo-restaurant-service:8082 ftgo-order-service:8083 ftgo-courier-service:8084; do
             NAME="${SVC%%:*}"
             PORT="${SVC##*:}"
             echo "Checking ${NAME} health endpoint..."
-            kubectl run smoke-test-${NAME} \
-              --namespace=${NS} \
+            kubectl run "smoke-test-${NAME}" \
+              --namespace="${NS}" \
               --image=curlimages/curl:latest \
               --restart=Never \
               --rm -i --timeout=30s \
@@ -188,12 +200,16 @@ jobs:
 
       - name: Post promotion summary
         if: always()
+        env:
+          SOURCE_ENV: ${{ needs.resolve.outputs.source }}
+          TARGET_ENV: ${{ needs.resolve.outputs.target }}
+          IMAGE_TAG: ${{ needs.resolve.outputs.image_tag }}
         run: |
           echo "## Promotion Summary" >> "$GITHUB_STEP_SUMMARY"
           echo "| Parameter | Value |" >> "$GITHUB_STEP_SUMMARY"
           echo "|-----------|-------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Source | ${{ needs.resolve.outputs.source }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Target | ${{ needs.resolve.outputs.target }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Image Tag | ${{ needs.resolve.outputs.image_tag }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Source | ${SOURCE_ENV} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Target | ${TARGET_ENV} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image Tag | ${IMAGE_TAG} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Commit | ${{ github.sha }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Promoted by | ${{ github.actor }} |" >> "$GITHUB_STEP_SUMMARY"

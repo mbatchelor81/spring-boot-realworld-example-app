@@ -31,6 +31,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: keycloak-config
+            - secretRef:
+                name: keycloak-admin-credentials
           resources:
             requests:
               cpu: 250m

@@ -8,18 +8,23 @@ labels:
     includeSelectors: false
 
 resources:
+  # Shared secrets
+  - common/db-sealed-secret.yaml
+  # MySQL
   - mysql/deployment.yaml
   - mysql/service.yaml
   - mysql/configmap.yaml
   - mysql/sealed-secret.yaml
   - mysql/pvc.yaml
+  # Keycloak
   - keycloak/deployment.yaml
   - keycloak/service.yaml
   - keycloak/configmap.yaml
+  - keycloak/sealed-secret.yaml
+  # Microservices
   - ftgo-consumer-service/deployment.yaml
   - ftgo-consumer-service/service.yaml
   - ftgo-consumer-service/configmap.yaml
-  - ftgo-consumer-service/sealed-secret.yaml
   - ftgo-consumer-service/hpa.yaml
   - ftgo-restaurant-service/deployment.yaml
   - ftgo-restaurant-service/service.yaml
@@ -33,4 +38,15 @@ resources:
   - ftgo-courier-service/service.yaml
   - ftgo-courier-service/configmap.yaml
   - ftgo-courier-service/hpa.yaml
+  # Networking
   - ingress/ingress.yaml
+
+configMapGenerator:
+  - name: keycloak-realm
+    files:
+      - ftgo-realm.json=keycloak/ftgo-realm.json
+    options:
+      disableNameSuffixHash: true
+      labels:
+        app.kubernetes.io/name: keycloak
+        app.kubernetes.io/component: identity

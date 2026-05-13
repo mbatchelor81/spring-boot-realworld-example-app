@@ -6,6 +6,4 @@ metadata:
     app.kubernetes.io/name: keycloak
     app.kubernetes.io/component: identity
 data:
-  KEYCLOAK_ADMIN: admin
-  KEYCLOAK_ADMIN_PASSWORD: admin
   KC_HEALTH_ENABLED: "true"

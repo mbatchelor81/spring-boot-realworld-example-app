@@ -59,10 +59,14 @@ jobs:
     steps:
       - name: Set parameters
         id: params
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ENV: ${{ github.event.inputs.environment }}
+          INPUT_TAG: ${{ github.event.inputs.image_tag }}
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            ENV="${{ github.event.inputs.environment }}"
-            TAG="${{ github.event.inputs.image_tag }}"
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            ENV="$INPUT_ENV"
+            TAG="$INPUT_TAG"
           else
             ENV="dev"
             TAG="latest"
@@ -87,14 +91,18 @@ jobs:
       - name: Install kustomize
         uses: imranismail/setup-kustomize@v2
 
-      - name: Validate overlay — ${{ needs.resolve.outputs.environment }}
+      - name: Validate overlay
+        env:
+          TARGET_ENV: ${{ needs.resolve.outputs.environment }}
         run: |
-          kustomize build deployment/kubernetes/overlays/${{ needs.resolve.outputs.environment }} > /dev/null
-          echo "Kustomize build successful for ${{ needs.resolve.outputs.environment }}"
+          kustomize build "deployment/kubernetes/overlays/${TARGET_ENV}" > /dev/null
+          echo "Kustomize build successful for ${TARGET_ENV}"
 
       - name: Dry-run render
+        env:
+          TARGET_ENV: ${{ needs.resolve.outputs.environment }}
         run: |
-          kustomize build deployment/kubernetes/overlays/${{ needs.resolve.outputs.environment }} \
+          kustomize build "deployment/kubernetes/overlays/${TARGET_ENV}" \
             | tee /tmp/manifests.yaml
           echo "---"
           echo "Manifest line count: $(wc -l < /tmp/manifests.yaml)"
@@ -129,45 +137,57 @@ jobs:
           chmod 600 ~/.kube/config
 
       - name: Update image tags
-        working-directory: deployment/kubernetes/overlays/${{ needs.resolve.outputs.environment }}
+        env:
+          TARGET_ENV: ${{ needs.resolve.outputs.environment }}
+          IMAGE_TAG: ${{ needs.resolve.outputs.image_tag }}
+        working-directory: deployment/kubernetes/overlays
         run: |
-          TAG="${{ needs.resolve.outputs.image_tag }}"
+          cd "$TARGET_ENV"
           for SERVICE in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
-            kustomize edit set image "${{ env.IMAGE_PREFIX }}/${SERVICE}=${{ env.IMAGE_PREFIX }}/${SERVICE}:${TAG}"
+            kustomize edit set image "${{ env.IMAGE_PREFIX }}/${SERVICE}=${{ env.IMAGE_PREFIX }}/${SERVICE}:${IMAGE_TAG}"
           done
 
       - name: Apply manifests
+        env:
+          TARGET_ENV: ${{ needs.resolve.outputs.environment }}
+          NAMESPACE: ${{ needs.resolve.outputs.namespace }}
         run: |
-          kustomize build deployment/kubernetes/overlays/${{ needs.resolve.outputs.environment }} \
-            | kubectl apply -f - --namespace=${{ needs.resolve.outputs.namespace }}
+          kustomize build "deployment/kubernetes/overlays/${TARGET_ENV}" \
+            | kubectl apply -f - --namespace="${NAMESPACE}"
 
       - name: Wait for rollouts
+        env:
+          NAMESPACE: ${{ needs.resolve.outputs.namespace }}
         run: |
-          NAMESPACE="${{ needs.resolve.outputs.namespace }}"
           for DEPLOY in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
             echo "Waiting for ${DEPLOY}..."
             kubectl rollout status deployment/${DEPLOY} \
-              --namespace=${NAMESPACE} \
+              --namespace="${NAMESPACE}" \
               --timeout=300s
           done
 
       - name: Verify health
+        env:
+          NAMESPACE: ${{ needs.resolve.outputs.namespace }}
         run: |
-          NAMESPACE="${{ needs.resolve.outputs.namespace }}"
           echo "Pod status:"
-          kubectl get pods --namespace=${NAMESPACE} -o wide
+          kubectl get pods --namespace="${NAMESPACE}" -o wide
           echo "---"
           echo "Service endpoints:"
-          kubectl get endpoints --namespace=${NAMESPACE}
+          kubectl get endpoints --namespace="${NAMESPACE}"
 
       - name: Post deployment summary
         if: always()
+        env:
+          TARGET_ENV: ${{ needs.resolve.outputs.environment }}
+          NAMESPACE: ${{ needs.resolve.outputs.namespace }}
+          IMAGE_TAG: ${{ needs.resolve.outputs.image_tag }}
         run: |
           echo "## Deployment Summary" >> "$GITHUB_STEP_SUMMARY"
           echo "| Parameter | Value |" >> "$GITHUB_STEP_SUMMARY"
           echo "|-----------|-------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Environment | ${{ needs.resolve.outputs.environment }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Namespace | ${{ needs.resolve.outputs.namespace }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Image Tag | ${{ needs.resolve.outputs.image_tag }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Environment | ${TARGET_ENV} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Namespace | ${NAMESPACE} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image Tag | ${IMAGE_TAG} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Commit | ${{ github.sha }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Triggered by | ${{ github.actor }} |" >> "$GITHUB_STEP_SUMMARY"
