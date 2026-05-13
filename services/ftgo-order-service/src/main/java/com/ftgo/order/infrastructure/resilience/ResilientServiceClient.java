@@ -24,8 +24,8 @@ public class ResilientServiceClient {
     this.discoveryProperties = discoveryProperties;
   }
 
-  @CircuitBreaker(name = "consumerService", fallbackMethod = "validateConsumerFallback")
-  @Retry(name = "consumerService")
+  @CircuitBreaker(name = "consumerService")
+  @Retry(name = "consumerService", fallbackMethod = "validateConsumerFallback")
   @Bulkhead(name = "consumerService")
   public boolean validateOrderForConsumer(long consumerId, long orderId) {
     String url =
@@ -35,8 +35,8 @@ public class ResilientServiceClient {
     return response.getStatusCode().is2xxSuccessful();
   }
 
-  @CircuitBreaker(name = "restaurantService", fallbackMethod = "validateRestaurantFallback")
-  @Retry(name = "restaurantService")
+  @CircuitBreaker(name = "restaurantService")
+  @Retry(name = "restaurantService", fallbackMethod = "validateRestaurantFallback")
   @Bulkhead(name = "restaurantService")
   public boolean validateRestaurant(long restaurantId) {
     String url =
