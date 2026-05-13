@@ -7,6 +7,7 @@
 
 plugins {
     id 'java'
+    id 'ftgo.quality-conventions'
 }
 
 group = 'com.ftgo'

@@ -1,9 +1,12 @@
 server:
   port: 8084
+  shutdown: graceful
 
 spring:
   application:
     name: ftgo-courier-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   datasource:
     url: jdbc:h2:mem:ftgo_courier_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
@@ -20,11 +23,20 @@ spring:
 ftgo:
   security:
     public-paths:
-      - /actuator/health
+      - /actuator/health/**
       - /actuator/info
     cors:
       allowed-origins:
         - "*"
+  tracing:
+    zipkin-endpoint: http://localhost:9411/api/v2/spans
+    sampling-rate: 1.0
+    propagation-type: B3
+  openapi:
+    title: Courier Service API
+    description: Manages courier registration, availability, and delivery plans
+    version: 1.0.0
+    server-url: http://localhost:8084
 
 management:
   endpoints:
@@ -34,7 +46,19 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState,diskSpace
+        readiness:
+          include: readinessState,db,diskSpace
     prometheus:
+      enabled: true
+  health:
+    db:
+      enabled: true
+    diskspace:
       enabled: true
   metrics:
     tags:
@@ -43,12 +67,40 @@ management:
       percentiles-histogram:
         http.server.requests: true
 
-ftgo:
-  openapi:
-    title: Courier Service API
-    description: Manages courier registration, availability, and delivery plans
-    version: 1.0.0
-    server-url: http://localhost:8084
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        wait-duration-in-open-state: 10s
+        failure-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+        slow-call-rate-threshold: 80
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 500ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+  bulkhead:
+    configs:
+      default:
+        max-concurrent-calls: 25
+        max-wait-duration: 0ms
+  ratelimiter:
+    configs:
+      default:
+        limit-for-period: 50
+        limit-refresh-period: 1s
+        timeout-duration: 0ms
 
 springdoc:
   swagger-ui:

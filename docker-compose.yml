@@ -1,17 +1,70 @@
 version: "3.8"
 
+# ---------------------------------------------------------------------------
+# FTGO Platform — Local Development Compose
+# ---------------------------------------------------------------------------
+# Usage:
+#   docker compose up --build          Build from source and start all services
+#   docker compose up                  Pull pre-built images from GHCR and start
+#   docker compose up ftgo-consumer-service   Start a single service
+# ---------------------------------------------------------------------------
+
+# NOTE: YAML merge (<<:) replaces keys — if a service overrides 'environment',
+# it must re-include SPRING_PROFILES_ACTIVE=docker in its own list.
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  environment:
+    - SPRING_PROFILES_ACTIVE=docker
+  logging:
+    driver: fluentd
+    options:
+      fluentd-address: localhost:24224
+      fluentd-async: "true"
+      tag: "ftgo.{{.Name}}"
+
 services:
+  # ---------------------------------------------------------------------------
+  # Identity Provider (Keycloak)
+  # ---------------------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1.1
+    command: start-dev --import-realm
+    ports:
+      - "9080:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    volumes:
+      - ./infrastructure/keycloak/ftgo-realm.json:/opt/keycloak/data/import/ftgo-realm.json:ro
+      - keycloak-data:/opt/keycloak/data/h2
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && cat <&3 | grep -q '200\\|UP'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
   # ---------------------------------------------------------------------------
   # FTGO Microservices
   # ---------------------------------------------------------------------------
   ftgo-consumer-service:
+    <<: *service-defaults
+    image: ghcr.io/mbatchelor81/ftgo-consumer-service:latest
     build:
-      context: ./services/ftgo-consumer-service
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: services/ftgo-consumer-service/docker/Dockerfile
     ports:
       - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - FTGO_SECURITY_JWT_ENABLED=true
+      - FTGO_SECURITY_JWT_ISSUER_URI=http://keycloak:8080/realms/ftgo
+      - FTGO_SECURITY_JWT_JWK_SET_URI=http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      fluentd:
+        condition: service_started
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health"]
       interval: 30s
@@ -19,13 +72,23 @@ services:
       retries: 3
 
   ftgo-restaurant-service:
+    <<: *service-defaults
+    image: ghcr.io/mbatchelor81/ftgo-restaurant-service:latest
     build:
-      context: ./services/ftgo-restaurant-service
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: services/ftgo-restaurant-service/docker/Dockerfile
     ports:
       - "8082:8082"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - FTGO_SECURITY_JWT_ENABLED=true
+      - FTGO_SECURITY_JWT_ISSUER_URI=http://keycloak:8080/realms/ftgo
+      - FTGO_SECURITY_JWT_JWK_SET_URI=http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      fluentd:
+        condition: service_started
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8082/actuator/health"]
       interval: 30s
@@ -33,13 +96,23 @@ services:
       retries: 3
 
   ftgo-order-service:
+    <<: *service-defaults
+    image: ghcr.io/mbatchelor81/ftgo-order-service:latest
     build:
-      context: ./services/ftgo-order-service
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: services/ftgo-order-service/docker/Dockerfile
     ports:
       - "8083:8083"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - FTGO_SECURITY_JWT_ENABLED=true
+      - FTGO_SECURITY_JWT_ISSUER_URI=http://keycloak:8080/realms/ftgo
+      - FTGO_SECURITY_JWT_JWK_SET_URI=http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      fluentd:
+        condition: service_started
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8083/actuator/health"]
       interval: 30s
@@ -47,18 +120,138 @@ services:
       retries: 3
 
   ftgo-courier-service:
+    <<: *service-defaults
+    image: ghcr.io/mbatchelor81/ftgo-courier-service:latest
     build:
-      context: ./services/ftgo-courier-service
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: services/ftgo-courier-service/docker/Dockerfile
     ports:
       - "8084:8084"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - FTGO_SECURITY_JWT_ENABLED=true
+      - FTGO_SECURITY_JWT_ISSUER_URI=http://keycloak:8080/realms/ftgo
+      - FTGO_SECURITY_JWT_JWK_SET_URI=http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      fluentd:
+        condition: service_started
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8084/actuator/health"]
       interval: 30s
       timeout: 5s
       retries: 3
+
+  # ---------------------------------------------------------------------------
+  # API Gateway
+  # ---------------------------------------------------------------------------
+  ftgo-api-gateway:
+    <<: *service-defaults
+    image: ghcr.io/mbatchelor81/ftgo-api-gateway:latest
+    build:
+      context: .
+      dockerfile: services/ftgo-api-gateway/docker/Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - FTGO_SECURITY_JWT_ISSUER_URI=http://keycloak:8080/realms/ftgo
+      - FTGO_SECURITY_JWT_JWK_SET_URI=http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      ftgo-consumer-service:
+        condition: service_healthy
+      ftgo-restaurant-service:
+        condition: service_healthy
+      ftgo-order-service:
+        condition: service_healthy
+      ftgo-courier-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Redis (for API Gateway rate limiting)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Distributed Tracing
+  # ---------------------------------------------------------------------------
+  zipkin:
+    image: openzipkin/zipkin:3.4
+    ports:
+      - "9411:9411"
+    environment:
+      - STORAGE_TYPE=mem
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9411/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Centralized Logging (EFK Stack)
+  # ---------------------------------------------------------------------------
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.18
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  fluentd:
+    build:
+      context: ./monitoring/fluentd
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    volumes:
+      - ./monitoring/fluentd/fluent.conf:/fluentd/etc/fluent.conf:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.18
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   # ---------------------------------------------------------------------------
   # Monitoring
@@ -97,5 +290,7 @@ services:
       - prometheus
 
 volumes:
+  keycloak-data:
   prometheus-data:
   grafana-data:
+  elasticsearch-data:

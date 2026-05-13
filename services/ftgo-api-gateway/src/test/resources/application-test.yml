@@ -1,0 +1,19 @@
+spring:
+  cloud:
+    gateway:
+      routes: []
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:9080/realms/ftgo/protocol/openid-connect/certs
+  redis:
+    host: localhost
+    port: 6379
+
+ftgo:
+  security:
+    jwt:
+      roles-claim: realm_access.roles
+      role-prefix: "ROLE_"
+      username-claim: preferred_username

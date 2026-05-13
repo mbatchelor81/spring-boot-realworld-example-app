@@ -2,15 +2,20 @@
 // ftgo.testing-conventions
 // ---------------------------------------------------------------------------
 // Standardized test configuration for FTGO microservices.
-// Uses JUnit 5 Platform, configures test logging, and provides common
-// testing dependencies.
+// Uses JUnit 5 Platform with JaCoCo coverage, parallel execution,
+// and structured test reporting.
 // ---------------------------------------------------------------------------
 
 plugins {
     id 'java'
+    id 'jacoco'
 }
 
 dependencies {
+    testImplementation platform("org.junit:junit-bom:${libs.versions.junit.bom.get()}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
 
@@ -18,10 +23,20 @@ dependencies {
     testImplementation "io.rest-assured:spring-mock-mvc:${libs.versions.rest.assured.get()}"
 
     testImplementation "org.assertj:assertj-core:${libs.versions.assertj.get()}"
+    testImplementation "org.mockito:mockito-core:${libs.versions.mockito.get()}"
+    testImplementation "org.mockito:mockito-junit-jupiter:${libs.versions.mockito.get()}"
+}
+
+jacoco {
+    toolVersion = '0.8.12'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+
+    // Parallel test execution
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    forkEvery = 100
 
     testLogging {
         events 'passed', 'skipped', 'failed'
@@ -30,6 +45,34 @@ tasks.named('test') {
         showStackTraces true
     }
 
+    // JUnit 5 XML reports for CI aggregation
+    reports {
+        junitXml.required = true
+        html.required = true
+    }
+
     // Ensure tests always run when requested
     outputs.upToDateWhen { false }
+
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                minimum = 0.70
+            }
+        }
+    }
 }
