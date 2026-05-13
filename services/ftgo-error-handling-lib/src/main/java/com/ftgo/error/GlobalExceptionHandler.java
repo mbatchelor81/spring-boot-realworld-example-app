@@ -3,6 +3,7 @@ package com.ftgo.error;
 import com.ftgo.common.NotYetImplementedException;
 import com.ftgo.common.UnsupportedStateTransitionException;
 import com.ftgo.domain.OrderMinimumNotMetException;
+import io.micrometer.tracing.Span;
 import io.micrometer.tracing.Tracer;
 import java.time.Instant;
 import java.util.List;
@@ -10,7 +11,6 @@ import java.util.stream.Collectors;
 import javax.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -19,7 +19,6 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
@@ -227,8 +226,11 @@ public class GlobalExceptionHandler {
   }
 
   private String currentTraceId() {
-    if (tracer != null && tracer.currentSpan() != null) {
-      return tracer.currentSpan().context().traceId();
+    if (tracer != null) {
+      Span span = tracer.currentSpan();
+      if (span != null) {
+        return span.context().traceId();
+      }
     }
     return null;
   }
