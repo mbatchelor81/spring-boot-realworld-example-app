@@ -12,6 +12,7 @@ public class RestaurantMetrics {
   private final Counter restaurantLookupFailures;
 
   public RestaurantMetrics(MeterRegistry registry) {
+
     this.restaurantsCreated =
         Counter.builder("ftgo.restaurants.created")
             .description("Total number of restaurants created")
@@ -39,4 +40,5 @@ public class RestaurantMetrics {
   public void incrementLookupFailures() {
     restaurantLookupFailures.increment();
   }
+
 }

@@ -1,6 +1,10 @@
 package com.ftgo.security;
 
+import com.ftgo.security.jwt.FtgoJwtAuthenticationConverter;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -31,6 +35,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableConfigurationProperties(FtgoSecurityProperties.class)
 public class FtgoSecurityAutoConfiguration {
 
+  private static final Logger log = LoggerFactory.getLogger(FtgoSecurityAutoConfiguration.class);
+
+  @Autowired(required = false)
+  private FtgoJwtAuthenticationConverter jwtAuthenticationConverter;
+
   @Bean
   @ConditionalOnMissingBean(PasswordEncoder.class)
   public PasswordEncoder passwordEncoder() {
@@ -55,9 +64,19 @@ public class FtgoSecurityAutoConfiguration {
         .antMatchers(publicPaths)
         .permitAll()
         .anyRequest()
-        .authenticated()
-        .and()
-        .httpBasic();
+        .authenticated();
+
+    if (properties.getJwt().isEnabled() && jwtAuthenticationConverter != null) {
+      http.oauth2ResourceServer().jwt().jwtAuthenticationConverter(jwtAuthenticationConverter);
+    } else {
+      if (properties.getJwt().isEnabled()) {
+        log.warn(
+            "JWT authentication is enabled but FtgoJwtAuthenticationConverter bean is missing. "
+                + "Falling back to HTTP Basic auth. Check that spring-security-oauth2-resource-server "
+                + "is on the classpath and FtgoJwtAutoConfiguration is loaded.");
+      }
+      http.httpBasic();
+    }
 
     return http.build();
   }

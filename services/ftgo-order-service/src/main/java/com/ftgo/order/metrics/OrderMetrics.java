@@ -16,6 +16,7 @@ public class OrderMetrics {
   private final Timer orderProcessingTime;
 
   public OrderMetrics(MeterRegistry registry) {
+
     this.ordersCreated =
         Counter.builder("ftgo.orders.created")
             .description("Total number of orders created")
@@ -70,4 +71,5 @@ public class OrderMetrics {
   public Timer getOrderProcessingTimer() {
     return orderProcessingTime;
   }
+
 }

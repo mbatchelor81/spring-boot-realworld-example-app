@@ -2,6 +2,7 @@ plugins {
     id 'org.springframework.boot'
     id 'io.spring.dependency-management'
     id 'java'
+    id 'jacoco'
 }
 
 group = 'com.ftgo'
@@ -18,6 +19,7 @@ dependencies {
     implementation project(':services:ftgo-openapi-lib')
     implementation project(':services:ftgo-courier-service-api')
     implementation project(':services:ftgo-security-lib')
+    implementation project(':services:ftgo-tracing-lib')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -35,8 +37,48 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
 }
 
+jacoco {
+    toolVersion = '0.8.12'
+}
+
 tasks.named('test') {
     useJUnitPlatform()
+
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showExceptions true
+        showCauses true
+        showStackTraces true
+    }
+
+    reports {
+        junitXml.required = true
+        html.required = true
+    }
+
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                minimum = 0.70
+            }
+        }
+    }
 }
 
 tasks.named('jar') {

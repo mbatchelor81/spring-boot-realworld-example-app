@@ -12,6 +12,7 @@ public class ConsumerMetrics {
   private final Counter consumerValidationFailures;
 
   public ConsumerMetrics(MeterRegistry registry) {
+
     this.consumersRegistered =
         Counter.builder("ftgo.consumers.registered")
             .description("Total number of consumers registered")
@@ -39,4 +40,5 @@ public class ConsumerMetrics {
   public void incrementValidationFailures() {
     consumerValidationFailures.increment();
   }
+
 }
