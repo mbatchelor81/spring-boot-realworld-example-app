@@ -11,6 +11,7 @@ plugins {
     id 'pmd'
     id 'com.github.spotbugs'
     id 'jacoco'
+    id 'org.sonarqube'
 }
 
 // ---- Checkstyle -----------------------------------------------------------
@@ -73,9 +74,11 @@ tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
         xml.required = true
         html.required = true
     }
-    // Exclude generated code
-    classes = files(project.sourceSets.main.output.classesDirs).filter {
-        !it.path.contains('generated')
+    // Exclude generated code using fileTree filter on individual class files
+    afterEvaluate {
+        classes = files(project.sourceSets.main.output.classesDirs.files.collect {
+            fileTree(dir: it, exclude: ['**/generated/**', '**/types/**'])
+        })
     }
 }
 

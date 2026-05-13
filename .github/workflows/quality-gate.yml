@@ -56,7 +56,7 @@ jobs:
             :services:ftgo-order-service:checkstyleMain \
             :services:ftgo-courier-service:checkstyleMain \
             -x spotlessCheck \
-            --continue || true
+            --continue
 
       - name: Run PMD analysis
         run: |
@@ -71,7 +71,7 @@ jobs:
             :services:ftgo-order-service:pmdMain \
             :services:ftgo-courier-service:pmdMain \
             -x spotlessCheck \
-            --continue || true
+            --continue
 
       - name: Run SpotBugs analysis
         run: |
@@ -86,7 +86,7 @@ jobs:
             :services:ftgo-order-service:spotbugsMain \
             :services:ftgo-courier-service:spotbugsMain \
             -x spotlessCheck \
-            --continue || true
+            --continue
 
       - name: Run tests with coverage
         run: |
@@ -102,7 +102,7 @@ jobs:
             :services:ftgo-courier-service:test \
             -x jacocoTestCoverageVerification \
             -x spotlessCheck \
-            --continue || true
+            --continue
 
       - name: Generate JaCoCo reports
         run: |
@@ -117,7 +117,7 @@ jobs:
             :services:ftgo-order-service:jacocoTestReport \
             :services:ftgo-courier-service:jacocoTestReport \
             -x spotlessCheck \
-            --continue || true
+            --continue
 
       - name: Upload analysis reports
         if: always()
@@ -172,7 +172,7 @@ jobs:
           ./gradlew clean build \
             -x jacocoTestCoverageVerification \
             -x spotlessCheck \
-            --continue || true
+            --continue
 
       - name: SonarQube Scan
         env:
@@ -191,7 +191,7 @@ jobs:
               -Dsonar.java.pmd.reportPaths=**/build/reports/pmd/main.xml \
               -Dsonar.java.spotbugs.reportPaths=**/build/reports/spotbugs/main.xml \
               -Dsonar.exclusions=**/build/generated/**,**/test/** \
-              || echo "::warning::SonarQube analysis failed — check SONAR_TOKEN secret"
+              || echo "::warning::SonarQube analysis failed — check SONAR_TOKEN and plugin configuration"
           else
             echo "::warning::SONAR_TOKEN not configured — skipping SonarQube analysis"
             echo "Configure SONAR_TOKEN in repository secrets to enable SonarQube quality gate."

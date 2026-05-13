@@ -45,6 +45,7 @@ spotbugs-plugin      = "6.0.9"
 spotbugs             = "4.8.4"
 pmd                  = "6.55.0"
 jacoco               = "0.8.12"
+sonarqube            = "5.0.0.4638"
 
 # --- Build plugins ---
 spotless             = "6.25.0"
@@ -126,3 +127,4 @@ spring-dependency    = { id = "io.spring.dependency-management",   version.ref =
 spotless             = { id = "com.diffplug.spotless",             version.ref = "spotless" }
 dgs-codegen          = { id = "com.netflix.dgs.codegen",           version.ref = "dgs-codegen" }
 spotbugs             = { id = "com.github.spotbugs",               version.ref = "spotbugs-plugin" }
+sonarqube            = { id = "org.sonarqube",                     version.ref = "sonarqube" }
