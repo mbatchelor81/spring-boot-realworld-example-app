@@ -55,7 +55,6 @@ Clients should include the following headers when calling the gateway:
 | Header            | Required | Description                        |
 |-------------------|----------|------------------------------------|
 | `Authorization`   | Yes      | `Bearer <JWT>` token from Keycloak |
-| `X-API-Key`       | No       | Used for rate-limit bucketing      |
 | `X-Correlation-Id`| No       | Propagated through all services; auto-generated if absent |
 
 ## Rate Limiting
@@ -64,7 +63,7 @@ Rate limiting is applied per route with Redis-backed token bucket:
 
 - **Replenish rate**: 20 requests/second
 - **Burst capacity**: 40 requests
-- Rate limit key: `X-API-Key` header, falling back to client IP
+- Rate limit key: authenticated user identity (JWT subject), falling back to client IP
 
 Exceeding the limit returns `HTTP 429 Too Many Requests`.
 

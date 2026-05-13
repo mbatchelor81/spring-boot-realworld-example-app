@@ -10,6 +10,10 @@ data:
   SERVER_PORT: "8085"
   KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/ftgo
   KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/ftgo/protocol/openid-connect/certs
+  CONSUMER_SERVICE_URL: http://ftgo-consumer-service:8081
+  RESTAURANT_SERVICE_URL: http://ftgo-restaurant-service:8082
+  ORDER_SERVICE_URL: http://ftgo-order-service:8083
+  COURIER_SERVICE_URL: http://ftgo-courier-service:8084
   REDIS_HOST: redis
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus,gateway
   MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"

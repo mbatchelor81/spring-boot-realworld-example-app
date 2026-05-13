@@ -16,13 +16,18 @@ public class CorrelationIdFilter implements GlobalFilter, Ordered {
 
   private static final Logger log = LoggerFactory.getLogger(CorrelationIdFilter.class);
   private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
+  private static final int MAX_CORRELATION_ID_LENGTH = 64;
+  private static final String CORRELATION_ID_PATTERN = "^[a-zA-Z0-9\\-_]+$";
 
   @Override
   public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
     String correlationId =
         exchange.getRequest().getHeaders().getFirst(CORRELATION_ID_HEADER);
 
-    if (correlationId == null || correlationId.isEmpty()) {
+    if (correlationId == null
+        || correlationId.isEmpty()
+        || correlationId.length() > MAX_CORRELATION_ID_LENGTH
+        || !correlationId.matches(CORRELATION_ID_PATTERN)) {
       correlationId = UUID.randomUUID().toString();
     }
 
