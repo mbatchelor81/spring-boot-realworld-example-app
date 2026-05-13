@@ -3,6 +3,11 @@
 # ---------------------------------------------------------------------------
 # Runs Checkstyle, PMD, SpotBugs, JaCoCo, and SonarQube analysis on every
 # push and pull request. Quality gate failures block PR merge.
+#
+# Note: Quality tasks (checkstyleMain, pmdMain, spotbugsMain, jacocoTestReport)
+# only exist on subprojects that apply ftgo.quality-conventions (via
+# ftgo.java-conventions). As services adopt convention plugins during
+# migration, these steps will automatically pick them up.
 # ---------------------------------------------------------------------------
 name: Quality Gate
 
@@ -43,81 +48,53 @@ jobs:
             ${{ runner.os }}-gradle-quality-
             ${{ runner.os }}-gradle-
 
+      - name: Build all service modules
+        run: |
+          ./gradlew clean build \
+            -x jacocoTestCoverageVerification \
+            -x spotlessCheck \
+            -x checkstyleMain -x checkstyleTest \
+            -x pmdMain -x pmdTest \
+            -x spotbugsMain -x spotbugsTest \
+            --continue
+
       - name: Run static analysis (Checkstyle, PMD, SpotBugs)
         run: |
-          ./gradlew \
-            :services:ftgo-common:checkstyleMain \
-            :services:ftgo-common-jpa:checkstyleMain \
-            :services:ftgo-domain:checkstyleMain \
-            :services:ftgo-security-lib:checkstyleMain \
-            :services:ftgo-openapi-lib:checkstyleMain \
-            :services:ftgo-consumer-service:checkstyleMain \
-            :services:ftgo-restaurant-service:checkstyleMain \
-            :services:ftgo-order-service:checkstyleMain \
-            :services:ftgo-courier-service:checkstyleMain \
+          # Run quality tasks on subprojects that have them.
+          # Uses Gradle task avoidance: only executes if the task exists.
+          ./gradlew checkstyleMain pmdMain spotbugsMain \
             -x spotlessCheck \
-            --continue
+            --continue 2>&1 || {
+            EXIT_CODE=$?
+            # Task-not-found (exit 1 with "not found") is expected during
+            # migration while services haven't adopted convention plugins.
+            if ./gradlew tasks --all 2>/dev/null | grep -q 'checkstyleMain'; then
+              exit $EXIT_CODE
+            else
+              echo "::notice::No services apply quality-conventions yet — static analysis skipped"
+            fi
+          }
 
-      - name: Run PMD analysis
+      - name: Run tests
         run: |
-          ./gradlew \
-            :services:ftgo-common:pmdMain \
-            :services:ftgo-common-jpa:pmdMain \
-            :services:ftgo-domain:pmdMain \
-            :services:ftgo-security-lib:pmdMain \
-            :services:ftgo-openapi-lib:pmdMain \
-            :services:ftgo-consumer-service:pmdMain \
-            :services:ftgo-restaurant-service:pmdMain \
-            :services:ftgo-order-service:pmdMain \
-            :services:ftgo-courier-service:pmdMain \
-            -x spotlessCheck \
-            --continue
-
-      - name: Run SpotBugs analysis
-        run: |
-          ./gradlew \
-            :services:ftgo-common:spotbugsMain \
-            :services:ftgo-common-jpa:spotbugsMain \
-            :services:ftgo-domain:spotbugsMain \
-            :services:ftgo-security-lib:spotbugsMain \
-            :services:ftgo-openapi-lib:spotbugsMain \
-            :services:ftgo-consumer-service:spotbugsMain \
-            :services:ftgo-restaurant-service:spotbugsMain \
-            :services:ftgo-order-service:spotbugsMain \
-            :services:ftgo-courier-service:spotbugsMain \
-            -x spotlessCheck \
-            --continue
-
-      - name: Run tests with coverage
-        run: |
-          ./gradlew \
-            :services:ftgo-common:test \
-            :services:ftgo-common-jpa:test \
-            :services:ftgo-domain:test \
-            :services:ftgo-security-lib:test \
-            :services:ftgo-openapi-lib:test \
-            :services:ftgo-consumer-service:test \
-            :services:ftgo-restaurant-service:test \
-            :services:ftgo-order-service:test \
-            :services:ftgo-courier-service:test \
+          ./gradlew test \
             -x jacocoTestCoverageVerification \
             -x spotlessCheck \
             --continue
 
       - name: Generate JaCoCo reports
+        if: always()
         run: |
-          ./gradlew \
-            :services:ftgo-common:jacocoTestReport \
-            :services:ftgo-common-jpa:jacocoTestReport \
-            :services:ftgo-domain:jacocoTestReport \
-            :services:ftgo-security-lib:jacocoTestReport \
-            :services:ftgo-openapi-lib:jacocoTestReport \
-            :services:ftgo-consumer-service:jacocoTestReport \
-            :services:ftgo-restaurant-service:jacocoTestReport \
-            :services:ftgo-order-service:jacocoTestReport \
-            :services:ftgo-courier-service:jacocoTestReport \
+          ./gradlew jacocoTestReport \
             -x spotlessCheck \
-            --continue
+            --continue 2>&1 || {
+            EXIT_CODE=$?
+            if ./gradlew tasks --all 2>/dev/null | grep -q 'jacocoTestReport'; then
+              exit $EXIT_CODE
+            else
+              echo "::notice::No services apply quality-conventions yet — JaCoCo skipped"
+            fi
+          }
 
       - name: Upload analysis reports
         if: always()
@@ -172,6 +149,9 @@ jobs:
           ./gradlew clean build \
             -x jacocoTestCoverageVerification \
             -x spotlessCheck \
+            -x checkstyleMain -x checkstyleTest \
+            -x pmdMain -x pmdTest \
+            -x spotbugsMain -x spotbugsTest \
             --continue
 
       - name: SonarQube Scan
