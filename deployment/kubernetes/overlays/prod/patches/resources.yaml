@@ -69,6 +69,23 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: ftgo-api-gateway
+spec:
+  template:
+    spec:
+      containers:
+        - name: ftgo-api-gateway
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: ftgo-mysql
 spec:
   template:

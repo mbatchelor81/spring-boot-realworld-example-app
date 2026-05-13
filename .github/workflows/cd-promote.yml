@@ -115,7 +115,7 @@ jobs:
           EXPECTED_TAG: ${{ needs.resolve.outputs.image_tag }}
         run: |
           echo "Checking deployments in ${NS}..."
-          for DEPLOY in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
+          for DEPLOY in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service ftgo-api-gateway; do
             STATUS=$(kubectl get deployment ${DEPLOY} -n "${NS}" -o jsonpath='{.status.conditions[?(@.type=="Available")].status}' 2>/dev/null || echo "NotFound")
             if [[ "${STATUS}" != "True" ]]; then
               echo "::error::Deployment ${DEPLOY} is not healthy in ${NS} (status: ${STATUS})"
@@ -168,7 +168,7 @@ jobs:
         working-directory: deployment/kubernetes/overlays
         run: |
           cd "$TARGET_ENV"
-          for SERVICE in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
+          for SERVICE in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service ftgo-api-gateway; do
             kustomize edit set image "${{ env.IMAGE_PREFIX }}/${SERVICE}=${{ env.IMAGE_PREFIX }}/${SERVICE}:${IMAGE_TAG}"
           done
 
@@ -184,7 +184,7 @@ jobs:
         env:
           NS: ${{ needs.resolve.outputs.target_namespace }}
         run: |
-          for DEPLOY in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
+          for DEPLOY in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service ftgo-api-gateway; do
             echo "Waiting for ${DEPLOY} in ${NS}..."
             kubectl rollout status deployment/${DEPLOY} \
               --namespace="${NS}" \
@@ -196,7 +196,7 @@ jobs:
           NS: ${{ needs.resolve.outputs.target_namespace }}
         run: |
           echo "Running smoke tests in ${NS}..."
-          for SVC in ftgo-consumer-service:8081 ftgo-restaurant-service:8082 ftgo-order-service:8083 ftgo-courier-service:8084; do
+          for SVC in ftgo-consumer-service:8081 ftgo-restaurant-service:8082 ftgo-order-service:8083 ftgo-courier-service:8084 ftgo-api-gateway:8085; do
             NAME="${SVC%%:*}"
             PORT="${SVC##*:}"
             echo "Checking ${NAME} health endpoint..."

@@ -29,3 +29,11 @@ metadata:
 data:
   KEYCLOAK_ISSUER_URI: https://ftgo.example.com/realms/ftgo
   KEYCLOAK_JWK_SET_URI: https://ftgo.example.com/realms/ftgo/protocol/openid-connect/certs
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ftgo-api-gateway-config
+data:
+  KEYCLOAK_ISSUER_URI: https://ftgo.example.com/realms/ftgo
+  KEYCLOAK_JWK_SET_URI: https://ftgo.example.com/realms/ftgo/protocol/openid-connect/certs
