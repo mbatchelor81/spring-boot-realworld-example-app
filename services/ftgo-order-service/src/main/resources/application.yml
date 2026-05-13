@@ -10,6 +10,20 @@ spring:
   flyway:
     enabled: true
 
+ftgo:
+  security:
+    public-paths:
+      - /actuator/health
+      - /actuator/info
+    cors:
+      allowed-origins:
+        - "*"
+  openapi:
+    title: Order Service API
+    description: Manages order creation, lifecycle, and revisions
+    version: 1.0.0
+    server-url: http://localhost:8083
+
 management:
   endpoints:
     web:
@@ -26,3 +40,11 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs

@@ -15,7 +15,9 @@ repositories {
 
 dependencies {
     implementation project(':services:ftgo-common')
+    implementation project(':services:ftgo-openapi-lib')
     implementation project(':services:ftgo-courier-service-api')
+    implementation project(':services:ftgo-security-lib')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -30,6 +32,7 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
 }
 
 tasks.named('test') {

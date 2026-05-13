@@ -1,0 +1,55 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'io.spring.dependency-management'
+}
+
+group = 'com.ftgo'
+version = '1.0.0'
+sourceCompatibility = '11'
+targetCompatibility = '11'
+
+repositories {
+    mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:2.6.3'
+    }
+}
+
+dependencies {
+    api project(':services:ftgo-common')
+    api project(':services:ftgo-common-jpa')
+
+    api 'org.springframework.boot:spring-boot-starter-data-jpa'
+    api 'org.springframework:spring-context'
+
+    implementation 'org.hibernate:hibernate-core'
+    implementation 'commons-lang:commons-lang:2.6'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'com.h2database:h2'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            groupId = 'com.ftgo'
+            artifactId = 'ftgo-domain'
+            version = '1.0.0'
+        }
+    }
+    repositories {
+        maven {
+            name = 'local'
+            url = layout.buildDirectory.dir('repo')
+        }
+    }
+}
