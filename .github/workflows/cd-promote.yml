@@ -5,8 +5,8 @@
 #   dev → staging → prod
 #
 # Staging and prod promotions require approval via GitHub Environments.
-# The workflow reads the currently deployed image tag from the source
-# environment and deploys it to the target.
+# Requires the exact image tag that was validated in the source
+# environment to prevent accidental promotion of unverified builds.
 #
 # Prerequisites:
 #   - GitHub Environments configured with protection rules:
@@ -28,8 +28,8 @@ on:
           - dev
           - staging
       image_tag:
-        description: 'Image tag to promote (reads from source env if blank)'
-        required: false
+        description: 'Image tag to promote (must match the tag deployed to source env)'
+        required: true
         type: string
 
 permissions:
@@ -72,7 +72,8 @@ jobs:
 
           TAG="$INPUT_TAG"
           if [[ -z "${TAG}" ]]; then
-            TAG="latest"
+            echo "::error::image_tag is required to ensure the exact verified version is promoted"
+            exit 1
           fi
 
           echo "source=${SOURCE}" >> "$GITHUB_OUTPUT"
@@ -101,9 +102,11 @@ jobs:
         uses: azure/setup-kubectl@v4
 
       - name: Set kubeconfig
+        env:
+          KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG }}
         run: |
           mkdir -p ~/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          echo "${KUBE_CONFIG_B64}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
 
       - name: Check source deployments
@@ -144,9 +147,11 @@ jobs:
         uses: azure/setup-kubectl@v4
 
       - name: Set kubeconfig
+        env:
+          KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG }}
         run: |
           mkdir -p ~/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          echo "${KUBE_CONFIG_B64}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
 
       - name: Update image tags
@@ -188,7 +193,7 @@ jobs:
             NAME="${SVC%%:*}"
             PORT="${SVC##*:}"
             echo "Checking ${NAME} health endpoint..."
-            kubectl run "smoke-test-${NAME}" \
+            kubectl run "smoke-test-${NAME}-${GITHUB_RUN_ID}" \
               --namespace="${NS}" \
               --image=curlimages/curl:latest \
               --restart=Never \

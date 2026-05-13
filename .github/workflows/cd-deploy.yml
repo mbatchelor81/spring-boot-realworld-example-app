@@ -131,9 +131,11 @@ jobs:
         uses: azure/setup-kubectl@v4
 
       - name: Set kubeconfig
+        env:
+          KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG }}
         run: |
           mkdir -p ~/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          echo "${KUBE_CONFIG_B64}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
 
       - name: Update image tags
