@@ -9,8 +9,8 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -26,28 +26,27 @@ import org.springframework.context.annotation.Configuration;
  * </pre>
  */
 @Configuration
+@EnableConfigurationProperties(FtgoOpenApiProperties.class)
 public class FtgoOpenApiAutoConfiguration {
 
   private static final String SECURITY_SCHEME_NAME = "bearerAuth";
 
-  @Value("${ftgo.openapi.title:FTGO Service API}")
-  private String title;
+  private final FtgoOpenApiProperties properties;
 
-  @Value("${ftgo.openapi.description:FTGO microservice API}")
-  private String description;
-
-  @Value("${ftgo.openapi.version:1.0.0}")
-  private String version;
-
-  @Value("${ftgo.openapi.server-url:http://localhost:8080}")
-  private String serverUrl;
+  public FtgoOpenApiAutoConfiguration(FtgoOpenApiProperties properties) {
+    this.properties = properties;
+  }
 
   @Bean
   @ConditionalOnMissingBean
   public OpenAPI ftgoOpenApi() {
     return new OpenAPI()
         .info(apiInfo())
-        .servers(List.of(new Server().url(serverUrl).description("Local development server")))
+        .servers(
+            List.of(
+                new Server()
+                    .url(properties.getServerUrl())
+                    .description("Local development server")))
         .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))
         .components(
             new Components()
@@ -62,9 +61,9 @@ public class FtgoOpenApiAutoConfiguration {
 
   private Info apiInfo() {
     return new Info()
-        .title(title)
-        .description(description)
-        .version(version)
+        .title(properties.getTitle())
+        .description(properties.getDescription())
+        .version(properties.getVersion())
         .contact(
             new Contact()
                 .name("FTGO Engineering")
