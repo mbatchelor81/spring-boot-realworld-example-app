@@ -15,6 +15,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 public final class FtgoUserContext {
 
   private static volatile String rolePrefix = "ROLE_";
+  private static volatile String userIdClaim = "sub";
 
   private FtgoUserContext() {}
 
@@ -22,8 +23,12 @@ public final class FtgoUserContext {
     rolePrefix = prefix;
   }
 
+  static void setUserIdClaim(String claim) {
+    userIdClaim = claim;
+  }
+
   public static Optional<String> getUserId() {
-    return getJwt().map(Jwt::getSubject);
+    return getJwt().map(jwt -> jwt.getClaimAsString(userIdClaim));
   }
 
   public static Optional<String> getUsername() {
@@ -36,6 +41,9 @@ public final class FtgoUserContext {
     return getAuthentication()
         .map(Authentication::getAuthorities)
         .map(FtgoUserContext::authorityNames)
+        .map(
+            names ->
+                names.stream().filter(n -> n.startsWith(rolePrefix)).collect(Collectors.toList()))
         .orElse(Collections.emptyList());
   }
 

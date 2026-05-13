@@ -25,6 +25,7 @@ public class FtgoJwtAutoConfiguration {
   public FtgoJwtAuthenticationConverter ftgoJwtAuthenticationConverter(
       FtgoSecurityProperties properties) {
     FtgoUserContext.setRolePrefix(properties.getJwt().getRolePrefix());
+    FtgoUserContext.setUserIdClaim(properties.getJwt().getUserIdClaim());
     return new FtgoJwtAuthenticationConverter(properties.getJwt());
   }
 
