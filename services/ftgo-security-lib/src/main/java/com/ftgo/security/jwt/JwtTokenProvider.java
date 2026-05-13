@@ -101,8 +101,11 @@ public class JwtTokenProvider {
   public JWTClaimsSet parseToken(String token) {
     try {
       SignedJWT signedJWT = SignedJWT.parse(token);
+      if (!signedJWT.verify(verifier)) {
+        throw new IllegalArgumentException("JWT signature verification failed");
+      }
       return signedJWT.getJWTClaimsSet();
-    } catch (ParseException e) {
+    } catch (ParseException | JOSEException e) {
       throw new IllegalArgumentException("Invalid JWT token", e);
     }
   }

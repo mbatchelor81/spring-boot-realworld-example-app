@@ -24,6 +24,7 @@ public class FtgoJwtAutoConfiguration {
   @ConditionalOnMissingBean(FtgoJwtAuthenticationConverter.class)
   public FtgoJwtAuthenticationConverter ftgoJwtAuthenticationConverter(
       FtgoSecurityProperties properties) {
+    FtgoUserContext.setRolePrefix(properties.getJwt().getRolePrefix());
     return new FtgoJwtAuthenticationConverter(properties.getJwt());
   }
 
