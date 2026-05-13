@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Shared logback configuration for FTGO microservices.
+  Include from each service's logback-spring.xml:
+    <include resource="com/ftgo/logging/logback-shared.xml"/>
+
+  Provides:
+  - MASKED_CONSOLE: human-readable console with PII masking
+  - FILE: rolling file appender for local dev
+  - JSON_CONSOLE / ASYNC_JSON: structured JSON for deployed envs (via logback-json.xml)
+-->
+<included>
+  <include resource="com/ftgo/logging/logback-json.xml"/>
+
+  <conversionRule conversionWord="maskedMsg"
+                  converterClass="com.ftgo.logging.MaskingConverter"/>
+
+  <property name="MASKED_LOG_PATTERN"
+            value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-},%X{spanId:-},%X{correlationId:-}] %-5level %logger{36} - %maskedMsg%n"/>
+
+  <appender name="MASKED_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>${MASKED_LOG_PATTERN}</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/${serviceName:-ftgo-service}.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>logs/${serviceName:-ftgo-service}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+      <maxFileSize>10MB</maxFileSize>
+      <maxHistory>7</maxHistory>
+      <totalSizeCap>100MB</totalSizeCap>
+    </rollingPolicy>
+    <encoder>
+      <pattern>${MASKED_LOG_PATTERN}</pattern>
+    </encoder>
+  </appender>
+</included>

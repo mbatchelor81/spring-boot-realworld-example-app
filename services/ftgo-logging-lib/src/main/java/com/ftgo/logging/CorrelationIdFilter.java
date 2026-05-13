@@ -14,6 +14,8 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
   public static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
   public static final String CORRELATION_ID_MDC_KEY = "correlationId";
   public static final String SERVICE_NAME_MDC_KEY = "serviceName";
+  public static final String REQUEST_ID_MDC_KEY = "requestId";
+  public static final String USER_ID_MDC_KEY = "userId";
 
   private final String serviceName;
 
@@ -30,13 +32,21 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
       if (correlationId == null || correlationId.isBlank()) {
         correlationId = UUID.randomUUID().toString();
       }
+      String requestId = UUID.randomUUID().toString();
       MDC.put(CORRELATION_ID_MDC_KEY, correlationId);
       MDC.put(SERVICE_NAME_MDC_KEY, serviceName);
+      MDC.put(REQUEST_ID_MDC_KEY, requestId);
+      String userId = request.getHeader("X-User-ID");
+      if (userId != null && !userId.isBlank()) {
+        MDC.put(USER_ID_MDC_KEY, userId);
+      }
       response.setHeader(CORRELATION_ID_HEADER, correlationId);
       filterChain.doFilter(request, response);
     } finally {
       MDC.remove(CORRELATION_ID_MDC_KEY);
       MDC.remove(SERVICE_NAME_MDC_KEY);
+      MDC.remove(REQUEST_ID_MDC_KEY);
+      MDC.remove(USER_ID_MDC_KEY);
     }
   }
 }
