@@ -215,12 +215,7 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleAll(Exception ex) throws Exception {
-    String exClassName = ex.getClass().getName();
-    if (exClassName.equals("org.springframework.security.access.AccessDeniedException")
-        || exClassName.equals(
-            "org.springframework.security.authentication.AuthenticationException")
-        || exClassName.startsWith(
-            "org.springframework.security.authentication.")) {
+    if (ex.getClass().getName().startsWith("org.springframework.security.")) {
       throw ex;
     }
 
