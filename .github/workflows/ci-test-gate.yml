@@ -1,0 +1,53 @@
+# ---------------------------------------------------------------------------
+# CI — Test Gate (Required Status Check)
+# ---------------------------------------------------------------------------
+# Single required status check that calls all three test tier workflows
+# via workflow_call. The final gate job depends on all of them — PRs
+# cannot merge if any test tier fails.
+# ---------------------------------------------------------------------------
+name: CI — Test Gate
+
+on:
+  push:
+    branches: [main, feat/microservices-migration]
+  pull_request:
+    branches: [main, feat/microservices-migration]
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    uses: ./.github/workflows/ci-unit-tests.yml
+    secrets: inherit
+
+  integration-tests:
+    name: Integration Tests
+    uses: ./.github/workflows/ci-integration-tests.yml
+    secrets: inherit
+
+  e2e-tests:
+    name: E2E Tests
+    uses: ./.github/workflows/ci-e2e-tests.yml
+    secrets: inherit
+
+  test-gate:
+    name: Test Gate
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests]
+    if: always()
+    timeout-minutes: 5
+
+    steps:
+      - name: Check test results
+        run: |
+          echo "Unit Tests: ${{ needs.unit-tests.result }}"
+          echo "Integration Tests: ${{ needs.integration-tests.result }}"
+          echo "E2E Tests: ${{ needs.e2e-tests.result }}"
+
+          if [[ "${{ needs.unit-tests.result }}" != "success" ]] || \
+             [[ "${{ needs.integration-tests.result }}" != "success" ]] || \
+             [[ "${{ needs.e2e-tests.result }}" != "success" ]]; then
+            echo "One or more test tiers failed. Blocking merge."
+            exit 1
+          fi
+
+          echo "All test tiers passed."
