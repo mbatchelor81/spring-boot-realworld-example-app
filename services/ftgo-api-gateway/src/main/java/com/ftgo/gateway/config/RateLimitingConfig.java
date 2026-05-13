@@ -10,14 +10,20 @@ import reactor.core.publisher.Mono;
 public class RateLimitingConfig {
 
   @Bean
-  public KeyResolver apiKeyResolver() {
+  public KeyResolver principalKeyResolver() {
     return exchange ->
         exchange
             .getPrincipal()
             .map(Principal::getName)
-            .defaultIfEmpty(
-                exchange.getRequest().getRemoteAddress() != null
-                    ? exchange.getRequest().getRemoteAddress().getAddress().getHostAddress()
-                    : "anonymous");
+            .switchIfEmpty(
+                Mono.fromSupplier(
+                    () ->
+                        exchange.getRequest().getRemoteAddress() != null
+                            ? exchange
+                                .getRequest()
+                                .getRemoteAddress()
+                                .getAddress()
+                                .getHostAddress()
+                            : "anonymous"));
   }
 }
