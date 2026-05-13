@@ -41,10 +41,10 @@ public class OrderController {
   }
 
   @DeleteMapping("/{orderId}")
-  @PreAuthorize(
-      "hasRole('CUSTOMER') and @resourceOwnershipEvaluator.isOwnerOrAdmin("
-          + "authentication, authentication.name)")
+  @PreAuthorize("hasRole('CUSTOMER')")
   public ResponseEntity<Void> cancelOrder(@PathVariable Long orderId) {
+    Long consumerId = Long.valueOf(FtgoUserContext.getUserId().orElse("0").hashCode());
+    orderService.cancelOrder(orderId, consumerId);
     return ResponseEntity.noContent().build();
   }
 

@@ -424,15 +424,35 @@ class RbacAuthorizationTest {
           tokenProvider.createToken(
               "owner-1", "owner-1", Collections.singletonList("CUSTOMER"));
       mockMvc
-          .perform(delete("/api/orders/1").header("Authorization", "Bearer " + ownerToken))
+          .perform(
+              delete("/api/orders/1")
+                  .param("ownerId", "owner-1")
+                  .header("Authorization", "Bearer " + ownerToken))
           .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("Non-owner CUSTOMER cannot cancel another user's order")
+    void nonOwnerCannotCancelOrder() throws Exception {
+      String nonOwnerToken =
+          tokenProvider.createToken(
+              "other-user", "other-user", Collections.singletonList("CUSTOMER"));
+      mockMvc
+          .perform(
+              delete("/api/orders/1")
+                  .param("ownerId", "owner-1")
+                  .header("Authorization", "Bearer " + nonOwnerToken))
+          .andExpect(status().isForbidden());
     }
 
     @Test
     @DisplayName("ADMIN can cancel any order")
     void adminCanCancelAnyOrder() throws Exception {
       mockMvc
-          .perform(delete("/api/orders/1").header("Authorization", "Bearer " + adminToken))
+          .perform(
+              delete("/api/orders/1")
+                  .param("ownerId", "someone-else")
+                  .header("Authorization", "Bearer " + adminToken))
           .andExpect(status().isNoContent());
     }
   }

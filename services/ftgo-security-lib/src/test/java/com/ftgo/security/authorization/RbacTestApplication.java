@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Configuration
@@ -62,8 +63,9 @@ public class RbacTestApplication {
     @DeleteMapping("/api/orders/{orderId}")
     @PreAuthorize(
         "hasRole('CUSTOMER') and @resourceOwnershipEvaluator.isOwnerOrAdmin("
-            + "authentication, authentication.name)")
-    public ResponseEntity<Void> cancelOrder(@PathVariable Long orderId) {
+            + "authentication, #ownerId)")
+    public ResponseEntity<Void> cancelOrder(
+        @PathVariable Long orderId, @RequestParam String ownerId) {
       return ResponseEntity.noContent().build();
     }
 

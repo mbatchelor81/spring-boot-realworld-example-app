@@ -46,6 +46,7 @@ public class CourierController {
   @PutMapping("/{courierId}/availability")
   @PreAuthorize("hasRole('COURIER')")
   public ResponseEntity<Void> updateAvailability(@PathVariable Long courierId) {
+    courierService.updateAvailability(courierId, true);
     return ResponseEntity.ok().build();
   }
 }
