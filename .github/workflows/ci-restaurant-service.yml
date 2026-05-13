@@ -1,0 +1,36 @@
+name: CI — Restaurant Service
+
+on:
+  push:
+    branches: [main, feat/microservices-migration]
+    paths:
+      - 'services/ftgo-restaurant-service/**'
+      - 'services/ftgo-restaurant-service-api/**'
+      - 'services/ftgo-common/**'
+      - 'services/ftgo-common-jpa/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/ci-restaurant-service.yml'
+      - '.github/workflows/_reusable-service-build.yml'
+  pull_request:
+    branches: [main, feat/microservices-migration]
+    paths:
+      - 'services/ftgo-restaurant-service/**'
+      - 'services/ftgo-restaurant-service-api/**'
+      - 'services/ftgo-common/**'
+      - 'services/ftgo-common-jpa/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/ci-restaurant-service.yml'
+      - '.github/workflows/_reusable-service-build.yml'
+
+jobs:
+  build:
+    uses: ./.github/workflows/_reusable-service-build.yml
+    with:
+      service-path: ':services:ftgo-restaurant-service'
+      service-name: ftgo-restaurant-service

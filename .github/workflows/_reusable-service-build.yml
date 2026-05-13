@@ -1,0 +1,63 @@
+# ---------------------------------------------------------------------------
+# Reusable CI workflow for FTGO microservices
+# ---------------------------------------------------------------------------
+# Called by per-service workflows. Builds, tests, and uploads reports for a
+# single Gradle sub-project under services/.
+# ---------------------------------------------------------------------------
+name: Reusable Service Build
+
+on:
+  workflow_call:
+    inputs:
+      service-path:
+        description: 'Gradle project path, e.g. :services:ftgo-consumer-service'
+        required: true
+        type: string
+      service-name:
+        description: 'Human-readable service name for artifact uploads'
+        required: true
+        type: string
+
+jobs:
+  build:
+    name: Build & Test — ${{ inputs.service-name }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build & Test
+        run: |
+          ./gradlew \
+            ${{ inputs.service-path }}:clean \
+            ${{ inputs.service-path }}:build \
+            ${{ inputs.service-path }}:test \
+            -x jacocoTestCoverageVerification \
+            -x spotlessCheck
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ inputs.service-name }}
+          path: |
+            services/${{ inputs.service-name }}/build/reports/test/
+            services/${{ inputs.service-name }}/build/test-results/
+          retention-days: 14

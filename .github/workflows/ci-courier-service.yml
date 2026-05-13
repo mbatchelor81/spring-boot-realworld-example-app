@@ -1,0 +1,36 @@
+name: CI — Courier Service
+
+on:
+  push:
+    branches: [main, feat/microservices-migration]
+    paths:
+      - 'services/ftgo-courier-service/**'
+      - 'services/ftgo-courier-service-api/**'
+      - 'services/ftgo-common/**'
+      - 'services/ftgo-common-jpa/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/ci-courier-service.yml'
+      - '.github/workflows/_reusable-service-build.yml'
+  pull_request:
+    branches: [main, feat/microservices-migration]
+    paths:
+      - 'services/ftgo-courier-service/**'
+      - 'services/ftgo-courier-service-api/**'
+      - 'services/ftgo-common/**'
+      - 'services/ftgo-common-jpa/**'
+      - 'gradle/**'
+      - 'settings.gradle'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/ci-courier-service.yml'
+      - '.github/workflows/_reusable-service-build.yml'
+
+jobs:
+  build:
+    uses: ./.github/workflows/_reusable-service-build.yml
+    with:
+      service-path: ':services:ftgo-courier-service'
+      service-name: ftgo-courier-service
