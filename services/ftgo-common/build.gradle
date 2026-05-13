@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
+    id 'jacoco'
 }
 
 group = 'com.ftgo'
@@ -27,8 +28,37 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
 }
 
+jacoco {
+    toolVersion = '0.8.12'
+}
+
 test {
     useJUnitPlatform()
+
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showExceptions true
+        showCauses true
+        showStackTraces true
+    }
+
+    reports {
+        junitXml.required = true
+        html.required = true
+    }
+
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
 }
 
 publishing {
