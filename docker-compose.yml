@@ -12,6 +12,8 @@ services:
       - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - zipkin
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health"]
       interval: 30s
@@ -26,6 +28,8 @@ services:
       - "8082:8082"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - zipkin
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8082/actuator/health"]
       interval: 30s
@@ -40,6 +44,8 @@ services:
       - "8083:8083"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - zipkin
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8083/actuator/health"]
       interval: 30s
@@ -54,9 +60,26 @@ services:
       - "8084:8084"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - zipkin
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8084/actuator/health"]
       interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Distributed Tracing
+  # ---------------------------------------------------------------------------
+  zipkin:
+    image: openzipkin/zipkin:3.4
+    ports:
+      - "9411:9411"
+    environment:
+      - STORAGE_TYPE=mem
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9411/health"]
+      interval: 15s
       timeout: 5s
       retries: 3
 
@@ -80,6 +103,7 @@ services:
       - ftgo-restaurant-service
       - ftgo-order-service
       - ftgo-courier-service
+      - zipkin
 
   grafana:
     image: grafana/grafana:10.4.1
@@ -99,3 +123,4 @@ services:
 volumes:
   prometheus-data:
   grafana-data:
+  zipkin-data:

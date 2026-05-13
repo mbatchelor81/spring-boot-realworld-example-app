@@ -18,6 +18,15 @@ ftgo:
     cors:
       allowed-origins:
         - "*"
+  tracing:
+    zipkin-endpoint: http://localhost:9411/api/v2/spans
+    sampling-rate: 1.0
+    propagation-type: B3
+  openapi:
+    title: Order Service API
+    description: Manages order creation, lifecycle, and revisions
+    version: 1.0.0
+    server-url: http://localhost:8083
 
 management:
   endpoints:
@@ -35,13 +44,6 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
-
-ftgo:
-  openapi:
-    title: Order Service API
-    description: Manages order creation, lifecycle, and revisions
-    version: 1.0.0
-    server-url: http://localhost:8083
 
 springdoc:
   swagger-ui:
