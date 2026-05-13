@@ -129,12 +129,16 @@ sensitive patterns in log output:
 
 | Pattern                      | Example Input             | Masked Output           |
 |------------------------------|---------------------------|-------------------------|
-| Credit card numbers          | `4111111111111111`        | `411111******1111`      |
+| Credit card numbers          | `4111111111111111`        | `4111********1111`      |
 | Passwords in key=value       | `password=secret123`      | `password=********`     |
 | Bearer tokens                | `Bearer eyJhbGciOi...`   | `Bearer [REDACTED]`     |
 | Authorization headers        | `Authorization: Basic...` | `Authorization: [REDACTED]` |
 
 The masking converter is applied in both JSON and console output formats.
+
+> **Limitation:** Masking applies to the formatted log message only. Exception
+> stack traces and MDC values are not masked. Always prevent sensitive data
+> from reaching log statements rather than relying solely on masking.
 
 ---
 
@@ -155,8 +159,10 @@ Deployed environments (`docker`, `k8s`, `prod`, `staging`) use an async
 appender to avoid blocking application threads on log I/O. Configuration:
 
 - Queue size: `512` (configurable via `ftgo.logging.async-queue-size`)
-- Discarding threshold: `0` (no log loss)
-- Never block: `true` (drop before blocking app threads)
+- Discarding threshold: `0` (no level-based discarding; all levels are retained
+  when queue capacity is available)
+- Never block: `true` (events are silently dropped when queue is completely
+  full, rather than blocking the application thread)
 - Caller data: disabled (performance)
 
 ### File Rotation (Local Dev)

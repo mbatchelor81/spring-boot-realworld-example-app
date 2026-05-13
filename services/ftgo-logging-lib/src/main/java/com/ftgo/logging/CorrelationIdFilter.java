@@ -36,7 +36,7 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
       MDC.put(CORRELATION_ID_MDC_KEY, correlationId);
       MDC.put(SERVICE_NAME_MDC_KEY, serviceName);
       MDC.put(REQUEST_ID_MDC_KEY, requestId);
-      String userId = request.getHeader("X-User-ID");
+      String userId = sanitizeHeaderValue(request.getHeader("X-User-ID"));
       if (userId != null && !userId.isBlank()) {
         MDC.put(USER_ID_MDC_KEY, userId);
       }
@@ -48,5 +48,18 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
       MDC.remove(REQUEST_ID_MDC_KEY);
       MDC.remove(USER_ID_MDC_KEY);
     }
+  }
+
+  private static final int MAX_HEADER_LENGTH = 128;
+
+  static String sanitizeHeaderValue(String value) {
+    if (value == null) {
+      return null;
+    }
+    String sanitized = value.replaceAll("[\\r\\n]", "");
+    if (sanitized.length() > MAX_HEADER_LENGTH) {
+      sanitized = sanitized.substring(0, MAX_HEADER_LENGTH);
+    }
+    return sanitized;
   }
 }

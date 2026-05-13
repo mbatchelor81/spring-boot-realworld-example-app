@@ -13,6 +13,8 @@
 <included>
   <include resource="com/ftgo/logging/logback-json.xml"/>
 
+  <springProperty name="serviceName" source="spring.application.name" defaultValue="ftgo-service"/>
+
   <conversionRule conversionWord="maskedMsg"
                   converterClass="com.ftgo.logging.MaskingConverter"/>
 
