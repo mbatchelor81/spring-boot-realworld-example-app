@@ -62,3 +62,12 @@ jobs:
             services/${{ inputs.service-name }}/build/reports/test/
             services/${{ inputs.service-name }}/build/test-results/
           retention-days: 14
+
+      - name: Upload JaCoCo coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ inputs.service-name }}
+          path: |
+            services/${{ inputs.service-name }}/build/reports/jacoco/
+          retention-days: 14
