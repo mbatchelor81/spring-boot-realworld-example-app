@@ -35,3 +35,18 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
+
+ftgo:
+  openapi:
+    title: Order Service API
+    description: Manages order creation, lifecycle, and revisions
+    version: 1.0.0
+    server-url: http://localhost:8083
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs

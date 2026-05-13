@@ -35,3 +35,18 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
+
+ftgo:
+  openapi:
+    title: Courier Service API
+    description: Manages courier registration, availability, and delivery plans
+    version: 1.0.0
+    server-url: http://localhost:8084
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
