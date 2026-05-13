@@ -2,7 +2,7 @@ package com.ftgo.tracing;
 
 import brave.Span;
 import brave.Tracing;
-import brave.propagation.Propagation;
+import brave.propagation.TraceContext;
 import brave.propagation.TraceContextOrSamplingFlags;
 import java.io.IOException;
 import javax.servlet.Filter;
@@ -16,13 +16,12 @@ import javax.servlet.http.HttpServletResponse;
 public class TracingServletFilter implements Filter {
 
   private final brave.Tracer tracer;
-  private final Propagation.Getter<HttpServletRequest, String> getter =
-      (carrier, key) -> carrier.getHeader(key);
-  private final Propagation<String> propagation;
+  private final TraceContext.Extractor<HttpServletRequest> extractor;
 
   public TracingServletFilter(Tracing tracing) {
     this.tracer = tracing.tracer();
-    this.propagation = tracing.propagation();
+    this.extractor =
+        tracing.propagation().extractor((carrier, key) -> carrier.getHeader(key));
   }
 
   @Override
@@ -36,7 +35,7 @@ public class TracingServletFilter implements Filter {
     HttpServletRequest httpRequest = (HttpServletRequest) request;
     HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-    TraceContextOrSamplingFlags extracted = propagation.extractor(getter).extract(httpRequest);
+    TraceContextOrSamplingFlags extracted = extractor.extract(httpRequest);
 
     Span span = tracer.nextSpan(extracted);
     span.name(httpRequest.getMethod() + " " + httpRequest.getRequestURI());

@@ -1,6 +1,5 @@
 package com.ftgo.courier.metrics;
 
-import com.ftgo.tracing.TracingHelper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Component;
@@ -12,10 +11,8 @@ public class CourierMetrics {
   private final Counter couriersAvailable;
   private final Counter couriersUnavailable;
   private final Counter deliveriesCompleted;
-  private final TracingHelper tracingHelper;
 
-  public CourierMetrics(MeterRegistry registry, TracingHelper tracingHelper) {
-    this.tracingHelper = tracingHelper;
+  public CourierMetrics(MeterRegistry registry) {
 
     this.couriersCreated =
         Counter.builder("ftgo.couriers.created")
@@ -54,7 +51,4 @@ public class CourierMetrics {
     deliveriesCompleted.increment();
   }
 
-  public TracingHelper tracing() {
-    return tracingHelper;
-  }
 }

@@ -100,6 +100,7 @@ public class TracingAutoConfiguration {
   }
 
   @Bean
+  @ConditionalOnMissingBean
   public FilterRegistrationBean<TracingServletFilter> tracingFilter(Tracing tracing) {
     FilterRegistrationBean<TracingServletFilter> registration = new FilterRegistrationBean<>();
     registration.setFilter(new TracingServletFilter(tracing));

@@ -1,6 +1,5 @@
 package com.ftgo.order.metrics;
 
-import com.ftgo.tracing.TracingHelper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -15,10 +14,8 @@ public class OrderMetrics {
   private final Counter ordersRevised;
   private final Counter ordersFailed;
   private final Timer orderProcessingTime;
-  private final TracingHelper tracingHelper;
 
-  public OrderMetrics(MeterRegistry registry, TracingHelper tracingHelper) {
-    this.tracingHelper = tracingHelper;
+  public OrderMetrics(MeterRegistry registry) {
 
     this.ordersCreated =
         Counter.builder("ftgo.orders.created")
@@ -75,7 +72,4 @@ public class OrderMetrics {
     return orderProcessingTime;
   }
 
-  public TracingHelper tracing() {
-    return tracingHelper;
-  }
 }

@@ -1,6 +1,5 @@
 package com.ftgo.restaurant.metrics;
 
-import com.ftgo.tracing.TracingHelper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Component;
@@ -11,10 +10,8 @@ public class RestaurantMetrics {
   private final Counter restaurantsCreated;
   private final Counter menuRevisions;
   private final Counter restaurantLookupFailures;
-  private final TracingHelper tracingHelper;
 
-  public RestaurantMetrics(MeterRegistry registry, TracingHelper tracingHelper) {
-    this.tracingHelper = tracingHelper;
+  public RestaurantMetrics(MeterRegistry registry) {
 
     this.restaurantsCreated =
         Counter.builder("ftgo.restaurants.created")
@@ -44,7 +41,4 @@ public class RestaurantMetrics {
     restaurantLookupFailures.increment();
   }
 
-  public TracingHelper tracing() {
-    return tracingHelper;
-  }
 }

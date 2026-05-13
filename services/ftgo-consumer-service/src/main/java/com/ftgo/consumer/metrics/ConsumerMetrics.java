@@ -1,6 +1,5 @@
 package com.ftgo.consumer.metrics;
 
-import com.ftgo.tracing.TracingHelper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Component;
@@ -11,10 +10,8 @@ public class ConsumerMetrics {
   private final Counter consumersRegistered;
   private final Counter consumersUpdated;
   private final Counter consumerValidationFailures;
-  private final TracingHelper tracingHelper;
 
-  public ConsumerMetrics(MeterRegistry registry, TracingHelper tracingHelper) {
-    this.tracingHelper = tracingHelper;
+  public ConsumerMetrics(MeterRegistry registry) {
 
     this.consumersRegistered =
         Counter.builder("ftgo.consumers.registered")
@@ -44,7 +41,4 @@ public class ConsumerMetrics {
     consumerValidationFailures.increment();
   }
 
-  public TracingHelper tracing() {
-    return tracingHelper;
-  }
 }
