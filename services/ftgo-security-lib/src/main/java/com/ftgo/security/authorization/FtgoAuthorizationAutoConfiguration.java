@@ -1,6 +1,8 @@
 package com.ftgo.security.authorization;
 
+import com.ftgo.security.FtgoSecurityProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -11,6 +13,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 
 @Configuration(proxyBeanMethods = false)
 @EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableConfigurationProperties(FtgoSecurityProperties.class)
 public class FtgoAuthorizationAutoConfiguration {
 
   @Bean
@@ -33,8 +36,9 @@ public class FtgoAuthorizationAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean(ResourceOwnershipEvaluator.class)
-  public ResourceOwnershipEvaluator resourceOwnershipEvaluator() {
-    return new ResourceOwnershipEvaluator();
+  public ResourceOwnershipEvaluator resourceOwnershipEvaluator(
+      FtgoSecurityProperties properties) {
+    return new ResourceOwnershipEvaluator(properties.getJwt().getUserIdClaim());
   }
 
   @Bean
