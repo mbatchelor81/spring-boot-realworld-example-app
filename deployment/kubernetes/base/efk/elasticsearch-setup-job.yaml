@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: elasticsearch-ilm-setup
+  namespace: logging
+  labels:
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/component: logging
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: elasticsearch-ilm-setup
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: setup
+          image: curlimages/curl:8.5.0
+          command: ["/bin/sh", "/scripts/setup-ilm.sh"]
+          env:
+            - name: ES_HOST
+              value: http://elasticsearch.logging.svc.cluster.local:9200
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: elasticsearch-ilm-config
+            defaultMode: 0755
