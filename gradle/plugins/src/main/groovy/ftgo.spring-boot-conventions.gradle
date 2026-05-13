@@ -19,6 +19,8 @@ dependencyManagement {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation "io.micrometer:micrometer-core"
+    runtimeOnly "io.micrometer:micrometer-registry-prometheus"
 
     compileOnly "org.projectlombok:lombok:${libs.versions.lombok.get()}"
     annotationProcessor "org.projectlombok:lombok:${libs.versions.lombok.get()}"
