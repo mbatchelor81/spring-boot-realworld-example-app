@@ -9,7 +9,6 @@ spec:
         - name: keycloak
           args:
             - start
-            - --optimized
           env:
             - name: KC_HOSTNAME
               value: ftgo.example.com

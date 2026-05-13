@@ -112,6 +112,7 @@ jobs:
       - name: Check source deployments
         env:
           NS: ${{ needs.resolve.outputs.source_namespace }}
+          EXPECTED_TAG: ${{ needs.resolve.outputs.image_tag }}
         run: |
           echo "Checking deployments in ${NS}..."
           for DEPLOY in ftgo-consumer-service ftgo-restaurant-service ftgo-order-service ftgo-courier-service; do
@@ -120,7 +121,13 @@ jobs:
               echo "::error::Deployment ${DEPLOY} is not healthy in ${NS} (status: ${STATUS})"
               exit 1
             fi
-            echo "${DEPLOY}: healthy"
+            RUNNING_IMAGE=$(kubectl get deployment ${DEPLOY} -n "${NS}" -o jsonpath='{.spec.template.spec.containers[0].image}')
+            RUNNING_TAG="${RUNNING_IMAGE##*:}"
+            if [[ "${RUNNING_TAG}" != "${EXPECTED_TAG}" ]]; then
+              echo "::error::${DEPLOY} is running tag '${RUNNING_TAG}' but promoting '${EXPECTED_TAG}'"
+              exit 1
+            fi
+            echo "${DEPLOY}: healthy, tag ${RUNNING_TAG} verified"
           done
 
   # -------------------------------------------------------------------------
