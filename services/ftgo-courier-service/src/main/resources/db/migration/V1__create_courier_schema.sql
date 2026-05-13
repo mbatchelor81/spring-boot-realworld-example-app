@@ -23,7 +23,7 @@ CREATE TABLE courier (
 CREATE TABLE courier_actions (
     courier_id  BIGINT NOT NULL,
     type        VARCHAR(30) NOT NULL,
-    time        TIMESTAMP,
+    "time"      TIMESTAMP,
     -- Reference to ftgo-order-service (no FK)
     order_id    BIGINT NOT NULL,
     CONSTRAINT fk_actions_courier
