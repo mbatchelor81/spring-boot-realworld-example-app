@@ -74,3 +74,13 @@ jobs:
             services/ftgo-common-jpa/build/reports/test/
             services/ftgo-common-jpa/build/test-results/
           retention-days: 14
+
+      - name: Upload JaCoCo coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-common-libs
+          path: |
+            services/ftgo-common/build/reports/jacoco/
+            services/ftgo-common-jpa/build/reports/jacoco/
+          retention-days: 14

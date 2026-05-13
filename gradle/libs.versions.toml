@@ -14,6 +14,9 @@
 spring-boot         = "3.2.5"
 spring-dependency   = "1.1.4"
 micrometer          = "1.12.5"
+micrometer-tracing  = "1.2.5"
+brave               = "5.16.0"
+zipkin-reporter     = "2.17.2"
 
 # --- Persistence ---
 flyway              = "9.22.3"
@@ -39,6 +42,14 @@ mockito             = "5.11.0"
 assertj             = "3.25.3"
 testcontainers      = "1.19.7"
 
+# --- Static Analysis ---
+checkstyle           = "10.14.2"
+spotbugs-plugin      = "6.0.9"
+spotbugs             = "4.8.4"
+pmd                  = "6.55.0"
+jacoco               = "0.8.12"
+sonarqube            = "5.0.0.4638"
+
 # --- Build plugins ---
 spotless             = "6.25.0"
 dgs-codegen          = "6.1.0"
@@ -57,7 +68,13 @@ spring-security-test             = { module = "org.springframework.security:spri
 # Micrometer (observability)
 micrometer-core                  = { module = "io.micrometer:micrometer-core",                    version.ref = "micrometer" }
 micrometer-registry-prometheus   = { module = "io.micrometer:micrometer-registry-prometheus",     version.ref = "micrometer" }
-micrometer-tracing-bridge-brave  = { module = "io.micrometer:micrometer-tracing-bridge-brave",    version.ref = "micrometer" }
+micrometer-tracing-bridge-brave  = { module = "io.micrometer:micrometer-tracing-bridge-brave",    version.ref = "micrometer-tracing" }
+
+# Distributed Tracing (Brave + Zipkin)
+zipkin-reporter-brave             = { module = "io.zipkin.reporter2:zipkin-reporter-brave",       version.ref = "zipkin-reporter" }
+brave-context-slf4j               = { module = "io.zipkin.brave:brave-context-slf4j",             version.ref = "brave" }
+brave-instrumentation-http        = { module = "io.zipkin.brave:brave-instrumentation-http",      version.ref = "brave" }
+zipkin-sender-urlconnection       = { module = "io.zipkin.reporter2:zipkin-sender-urlconnection", version.ref = "zipkin-reporter" }
 
 # Persistence
 flyway-core                      = { module = "org.flywaydb:flyway-core",                        version.ref = "flyway" }
@@ -113,8 +130,18 @@ micrometer = [
     "micrometer-registry-prometheus",
 ]
 
+tracing = [
+    "micrometer-tracing-bridge-brave",
+    "zipkin-reporter-brave",
+    "zipkin-sender-urlconnection",
+    "brave-context-slf4j",
+    "brave-instrumentation-http",
+]
+
 [plugins]
 spring-boot          = { id = "org.springframework.boot",          version.ref = "spring-boot" }
 spring-dependency    = { id = "io.spring.dependency-management",   version.ref = "spring-dependency" }
 spotless             = { id = "com.diffplug.spotless",             version.ref = "spotless" }
 dgs-codegen          = { id = "com.netflix.dgs.codegen",           version.ref = "dgs-codegen" }
+spotbugs             = { id = "com.github.spotbugs",               version.ref = "spotbugs-plugin" }
+sonarqube            = { id = "org.sonarqube",                     version.ref = "sonarqube" }
