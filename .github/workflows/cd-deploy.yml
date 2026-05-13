@@ -2,7 +2,7 @@
 # CD — Deploy to Kubernetes
 # ---------------------------------------------------------------------------
 # Deploys FTGO microservices to the target environment using Kustomize.
-# Triggered automatically on merge to main (deploys to dev) or manually
+# Triggered automatically on merge to master (deploys to dev) or manually
 # via workflow_dispatch for any environment.
 #
 # Prerequisites:

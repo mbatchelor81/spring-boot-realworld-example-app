@@ -82,13 +82,13 @@ echo -n 'my-db-password' \
 
 | Workflow | Trigger | Description |
 |----------|---------|-------------|
-| `cd-deploy.yml` | Push to `main`, or manual | Deploys to target environment |
+| `cd-deploy.yml` | Push to `master`, or manual | Deploys to target environment |
 | `cd-promote.yml` | Manual (workflow_dispatch) | Promotes dev→staging or staging→prod |
 
 ### Promotion Flow
 
 ```
-merge to main → auto-deploy to dev
+merge to master → auto-deploy to dev
                        ↓
               manual promote (1 approval)
                        ↓
