@@ -1,12 +1,16 @@
 package com.ftgo.restaurant.api.commands;
 
 import com.ftgo.common.Money;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 public class MenuItemDto {
 
-  private final String id;
-  private final String name;
-  private final Money price;
+  @NotBlank private final String id;
+
+  @NotBlank private final String name;
+
+  @NotNull private final Money price;
 
   public MenuItemDto(String id, String name, Money price) {
     this.id = id;
