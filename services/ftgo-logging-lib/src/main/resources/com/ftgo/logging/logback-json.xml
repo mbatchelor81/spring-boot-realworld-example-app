@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Shared structured JSON logging configuration for FTGO microservices.
+  Include this from each service's logback-spring.xml:
+    <include resource="com/ftgo/logging/logback-json.xml"/>
+-->
+<included>
+  <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <includeMdcKeyName>traceId</includeMdcKeyName>
+      <includeMdcKeyName>spanId</includeMdcKeyName>
+      <includeMdcKeyName>correlationId</includeMdcKeyName>
+      <includeMdcKeyName>serviceName</includeMdcKeyName>
+      <fieldNames>
+        <timestamp>@timestamp</timestamp>
+        <version>[ignore]</version>
+        <levelValue>[ignore]</levelValue>
+      </fieldNames>
+      <timeZone>UTC</timeZone>
+      <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
+    </encoder>
+  </appender>
+
+  <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+    <queueSize>512</queueSize>
+    <discardingThreshold>0</discardingThreshold>
+    <includeCallerData>false</includeCallerData>
+    <neverBlock>true</neverBlock>
+    <appender-ref ref="JSON_CONSOLE"/>
+  </appender>
+</included>

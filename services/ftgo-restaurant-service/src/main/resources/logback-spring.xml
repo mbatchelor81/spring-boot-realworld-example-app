@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
   <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <include resource="com/ftgo/logging/logback-json.xml"/>
 
   <property name="LOG_PATTERN"
             value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-},%X{spanId:-}] %-5level %logger{36} - %msg%n"/>
@@ -11,7 +12,17 @@
     </encoder>
   </appender>
 
-  <root level="INFO">
-    <appender-ref ref="CONSOLE"/>
-  </root>
+  <!-- Structured JSON via async appender for containerised environments -->
+  <springProfile name="docker | k8s | prod | staging">
+    <root level="INFO">
+      <appender-ref ref="ASYNC_JSON"/>
+    </root>
+  </springProfile>
+
+  <!-- Plain text for local dev, test, and any other profile -->
+  <springProfile name="!docker & !k8s & !prod & !staging">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+  </springProfile>
 </configuration>
