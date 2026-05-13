@@ -22,7 +22,7 @@ public class MaskingConverter extends ClassicConverter {
       Pattern.compile("(?i)(Bearer)\\s+[A-Za-z0-9\\-._~+/]+=*");
 
   private static final Pattern AUTHORIZATION_PATTERN =
-      Pattern.compile("(?i)(Authorization)\\s*[=:]\\s*\"?([^\"\\s,;}{]+)\"?");
+      Pattern.compile("(?i)(Authorization)\\s*[=:]\\s*\"?([^\"}{;,\\n]+?)\\s*(?:\"|,|;|\\}|$)");
 
   @Override
   public String convert(ILoggingEvent event) {
@@ -37,8 +37,8 @@ public class MaskingConverter extends ClassicConverter {
     String result = message;
     result = maskCreditCards(result);
     result = maskPasswords(result);
-    result = maskBearerTokens(result);
     result = maskAuthorization(result);
+    result = maskBearerTokens(result);
     return result;
   }
 

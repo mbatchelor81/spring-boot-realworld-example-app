@@ -40,6 +40,15 @@ class MaskingConverterTest {
   }
 
   @Test
+  void masksAuthorizationBearerCombined() {
+    String input = "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.payload.sig";
+    String result = MaskingConverter.maskSensitiveData(input);
+    assertFalse(result.contains("eyJhbGciOiJIUzI1NiJ9"));
+    assertTrue(result.contains("Authorization=[REDACTED]"));
+    assertFalse(result.contains("Bearer"), "Bearer keyword should not remain after masking");
+  }
+
+  @Test
   void preservesNonSensitiveContent() {
     String input = "Order 12345 created for user john";
     String result = MaskingConverter.maskSensitiveData(input);
