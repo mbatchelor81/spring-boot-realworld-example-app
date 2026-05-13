@@ -29,7 +29,7 @@ public class OrderController {
   @PreAuthorize("hasRole('CUSTOMER')")
   public ResponseEntity<Map<String, Object>> createOrder() {
     String userId = FtgoUserContext.getUserId().orElse("unknown");
-    Long orderId = orderService.createOrder(Long.valueOf(userId.hashCode()), 1L);
+    Long orderId = orderService.createOrder(userId, 1L);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(Map.of("orderId", orderId, "status", "CREATED"));
   }
@@ -43,7 +43,7 @@ public class OrderController {
   @DeleteMapping("/{orderId}")
   @PreAuthorize("hasRole('CUSTOMER')")
   public ResponseEntity<Void> cancelOrder(@PathVariable Long orderId) {
-    Long consumerId = Long.valueOf(FtgoUserContext.getUserId().orElse("0").hashCode());
+    String consumerId = FtgoUserContext.getUserId().orElse("unknown");
     orderService.cancelOrder(orderId, consumerId);
     return ResponseEntity.noContent().build();
   }

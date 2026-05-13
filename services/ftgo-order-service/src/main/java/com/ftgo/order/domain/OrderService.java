@@ -8,21 +8,21 @@ import org.springframework.stereotype.Service;
 public class OrderService {
 
   @PreAuthorize("hasRole('CUSTOMER')")
-  public Long createOrder(Long consumerId, Long restaurantId) {
+  public Long createOrder(String consumerId, Long restaurantId) {
     return 1L;
   }
 
   @PreAuthorize(
       "hasRole('CUSTOMER') and @resourceOwnershipEvaluator.isOwnerOrAdmin("
-          + "authentication, #consumerId.toString())")
-  public void cancelOrder(Long orderId, Long consumerId) {
+          + "authentication, #consumerId)")
+  public void cancelOrder(Long orderId, String consumerId) {
     // cancel order logic
   }
 
   @PreAuthorize(
       "hasRole('CUSTOMER') and @resourceOwnershipEvaluator.isOwnerOrAdmin("
-          + "authentication, #consumerId.toString())")
-  public void reviseOrder(Long orderId, Long consumerId) {
+          + "authentication, #consumerId)")
+  public void reviseOrder(Long orderId, String consumerId) {
     // revise order logic
   }
 

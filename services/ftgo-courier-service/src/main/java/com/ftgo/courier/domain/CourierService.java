@@ -18,8 +18,8 @@ public class CourierService {
 
   @PreAuthorize(
       "hasRole('COURIER') and @resourceOwnershipEvaluator.isOwnerOrAdmin("
-          + "authentication, #courierId.toString())")
-  public void updateAvailability(Long courierId, boolean available) {
+          + "authentication, #courierId)")
+  public void updateAvailability(String courierId, boolean available) {
     // update availability logic
   }
 

@@ -18,7 +18,7 @@ public class RestaurantService {
 
   @PreAuthorize(
       "hasRole('RESTAURANT_OWNER') and @resourceOwnershipEvaluator.isOwnerOrAdmin("
-          + "authentication, #ownerId.toString())")
+          + "authentication, #ownerId)")
   public void reviseMenu(Long restaurantId, String ownerId) {
     // revise menu logic
   }
