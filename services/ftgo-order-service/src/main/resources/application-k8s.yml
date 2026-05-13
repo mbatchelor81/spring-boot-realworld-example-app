@@ -2,3 +2,12 @@ ftgo:
   tracing:
     zipkin-endpoint: http://zipkin.monitoring.svc.cluster.local:9411/api/v2/spans
     sampling-rate: 1.0
+  service-discovery:
+    consumer-service-url: http://ftgo-consumer-service.default.svc.cluster.local:8080
+    restaurant-service-url: http://ftgo-restaurant-service.default.svc.cluster.local:8080
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true

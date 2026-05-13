@@ -1,0 +1,38 @@
+plugins {
+    id 'java-library'
+    id 'io.spring.dependency-management'
+}
+
+group = 'com.ftgo'
+version = '1.0.0'
+sourceCompatibility = '11'
+targetCompatibility = '11'
+
+repositories {
+    mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:2.6.3'
+    }
+}
+
+dependencies {
+    api 'net.logstash.logback:logstash-logback-encoder:7.3'
+    api 'ch.qos.logback:logback-classic'
+    api 'ch.qos.logback:logback-core'
+
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'javax.servlet:javax.servlet-api:4.0.1'
+    implementation 'org.slf4j:slf4j-api'
+
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+test {
+    useJUnitPlatform()
+}
