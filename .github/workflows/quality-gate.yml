@@ -2,12 +2,12 @@
 # Quality Gate CI — Static Analysis & Coverage
 # ---------------------------------------------------------------------------
 # Runs Checkstyle, PMD, SpotBugs, JaCoCo, and SonarQube analysis on every
-# push and pull request. Quality gate failures block PR merge.
+# push and pull request. Quality gate failures block PR merge once services
+# adopt ftgo.quality-conventions via ftgo.java-conventions.
 #
-# Note: Quality tasks (checkstyleMain, pmdMain, spotbugsMain, jacocoTestReport)
-# only exist on subprojects that apply ftgo.quality-conventions (via
-# ftgo.java-conventions). As services adopt convention plugins during
-# migration, these steps will automatically pick them up.
+# During migration: static analysis tasks only exist on subprojects that
+# apply the convention plugins. Steps that invoke those tasks use || true
+# until services are migrated. The test step always enforces failures.
 # ---------------------------------------------------------------------------
 name: Quality Gate
 
@@ -48,53 +48,37 @@ jobs:
             ${{ runner.os }}-gradle-quality-
             ${{ runner.os }}-gradle-
 
-      - name: Build all service modules
+      - name: Build all modules
         run: |
           ./gradlew clean build \
             -x jacocoTestCoverageVerification \
             -x spotlessCheck \
-            -x checkstyleMain -x checkstyleTest \
-            -x pmdMain -x pmdTest \
-            -x spotbugsMain -x spotbugsTest \
             --continue
 
       - name: Run static analysis (Checkstyle, PMD, SpotBugs)
         run: |
-          # Run quality tasks on subprojects that have them.
-          # Uses Gradle task avoidance: only executes if the task exists.
+          # Static analysis tasks only exist on subprojects applying
+          # ftgo.quality-conventions. Tolerates task-not-found until
+          # services are migrated — remove || true once adopted.
           ./gradlew checkstyleMain pmdMain spotbugsMain \
             -x spotlessCheck \
-            --continue 2>&1 || {
-            EXIT_CODE=$?
-            # Task-not-found (exit 1 with "not found") is expected during
-            # migration while services haven't adopted convention plugins.
-            if ./gradlew tasks --all 2>/dev/null | grep -q 'checkstyleMain'; then
-              exit $EXIT_CODE
-            else
-              echo "::notice::No services apply quality-conventions yet — static analysis skipped"
-            fi
-          }
+            --continue || true
 
       - name: Run tests
         run: |
           ./gradlew test \
             -x jacocoTestCoverageVerification \
-            -x spotlessCheck \
-            --continue
+            -x spotlessCheck
 
       - name: Generate JaCoCo reports
         if: always()
         run: |
+          # Root project's jacocoTestReport finalizedBy
+          # jacocoTestCoverageVerification — must exclude it here.
           ./gradlew jacocoTestReport \
+            -x jacocoTestCoverageVerification \
             -x spotlessCheck \
-            --continue 2>&1 || {
-            EXIT_CODE=$?
-            if ./gradlew tasks --all 2>/dev/null | grep -q 'jacocoTestReport'; then
-              exit $EXIT_CODE
-            else
-              echo "::notice::No services apply quality-conventions yet — JaCoCo skipped"
-            fi
-          }
+            --continue || true
 
       - name: Upload analysis reports
         if: always()
@@ -107,6 +91,8 @@ jobs:
             services/*/build/reports/spotbugs/
             services/*/build/reports/jacoco/
             services/*/build/reports/tests/
+            build/reports/jacoco/
+            build/reports/tests/
           retention-days: 14
 
   sonarqube:
@@ -149,9 +135,6 @@ jobs:
           ./gradlew clean build \
             -x jacocoTestCoverageVerification \
             -x spotlessCheck \
-            -x checkstyleMain -x checkstyleTest \
-            -x pmdMain -x pmdTest \
-            -x spotbugsMain -x spotbugsTest \
             --continue
 
       - name: SonarQube Scan
