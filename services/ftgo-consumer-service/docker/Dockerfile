@@ -1,8 +1,55 @@
-FROM eclipse-temurin:11-jre-alpine
+# ---------------------------------------------------------------------------
+# Multi-stage Dockerfile — ftgo-consumer-service
+# ---------------------------------------------------------------------------
+# Builder: Gradle with dependency caching
+# Runtime: Minimal JRE 17 with non-root user and health check
+# ---------------------------------------------------------------------------
 
-ARG JAR_FILE=build/libs/*.jar
-COPY ${JAR_FILE} app.jar
+# ---------------------------------------------------------------------------
+# Stage 1 — Build
+# ---------------------------------------------------------------------------
+FROM eclipse-temurin:17-jdk-alpine AS builder
 
-EXPOSE 8080
+WORKDIR /workspace
 
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+# Copy Gradle wrapper and make executable
+COPY gradlew gradlew
+COPY gradle/wrapper/ gradle/wrapper/
+RUN chmod +x gradlew
+
+# Copy build configuration (cached unless these files change)
+COPY settings.gradle settings.gradle
+COPY build.gradle build.gradle
+COPY gradle/plugins/ gradle/plugins/
+COPY gradle/libs.versions.toml gradle/libs.versions.toml
+
+# Copy all service build files and sources
+COPY services/ services/
+
+# Build the service JAR (tests run separately in CI)
+RUN ./gradlew :services:ftgo-consumer-service:bootJar \
+    -x test -x spotlessCheck -x jacocoTestCoverageVerification \
+    --no-daemon
+
+# ---------------------------------------------------------------------------
+# Stage 2 — Runtime
+# ---------------------------------------------------------------------------
+FROM eclipse-temurin:17-jre-alpine
+
+LABEL org.opencontainers.image.source="https://github.com/mbatchelor81/spring-boot-realworld-example-app"
+LABEL org.opencontainers.image.description="FTGO Consumer Service"
+
+RUN addgroup -S ftgo && adduser -S ftgo -G ftgo
+
+WORKDIR /app
+
+COPY --chown=ftgo:ftgo --from=builder /workspace/services/ftgo-consumer-service/build/libs/*.jar app.jar
+
+USER ftgo
+
+EXPOSE 8081
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD wget -qO- http://localhost:8081/actuator/health || exit 1
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
