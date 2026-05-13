@@ -12,16 +12,17 @@
     </encoder>
   </appender>
 
-  <!-- Local dev: plain text; docker/k8s: structured JSON via async appender -->
-  <springProfile name="default">
-    <root level="INFO">
-      <appender-ref ref="CONSOLE"/>
-    </root>
-  </springProfile>
-
+  <!-- Structured JSON via async appender for containerised environments -->
   <springProfile name="docker | k8s | prod | staging">
     <root level="INFO">
       <appender-ref ref="ASYNC_JSON"/>
+    </root>
+  </springProfile>
+
+  <!-- Plain text for local dev, test, and any other profile -->
+  <springProfile name="!docker & !k8s & !prod & !staging">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
     </root>
   </springProfile>
 </configuration>
