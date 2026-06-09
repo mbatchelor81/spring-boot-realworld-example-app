@@ -11,6 +11,10 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '11'
 targetCompatibility = '11'
 
+// Override Spring Boot BOM-pinned versions so Mockito 5.x resolves correctly.
+ext['mockito.version'] = '5.18.0'
+ext['byte-buddy.version'] = '1.17.5'
+
 spotless {
     java {
         target project.fileTree(project.rootDir) {
@@ -79,7 +83,8 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:2.2.2'
-    testImplementation 'org.mockito:mockito-inline:4.0.0'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
     
     // Selenium E2E testing
     testImplementation 'org.seleniumhq.selenium:selenium-java:4.15.0'
