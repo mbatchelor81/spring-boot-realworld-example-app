@@ -11,6 +11,10 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '11'
 targetCompatibility = '11'
 
+// Spring Boot's dependency-management BOM pins the selenium-* submodules; override
+// so selenium-java and all its submodules resolve to the desired version.
+ext['selenium.version'] = '4.33.0'
+
 spotless {
     java {
         target project.fileTree(project.rootDir) {
