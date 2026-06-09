@@ -11,6 +11,11 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '11'
 targetCompatibility = '11'
 
+// Upgrade Mockito to 5.x for the whole BOM so mockito-core and mockito-junit-jupiter stay in sync.
+ext['mockito.version'] = '5.14.2'
+// Mockito 5.x requires a newer Byte Buddy than the one managed by the Spring Boot BOM.
+ext['byte-buddy.version'] = '1.15.4'
+
 spotless {
     java {
         target project.fileTree(project.rootDir) {
@@ -79,7 +84,7 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:2.2.2'
-    testImplementation 'org.mockito:mockito-inline:4.0.0'
+    testImplementation 'org.mockito:mockito-core'
     
     // Selenium E2E testing
     testImplementation 'org.seleniumhq.selenium:selenium-java:4.15.0'
