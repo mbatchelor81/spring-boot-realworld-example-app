@@ -10,6 +10,7 @@ plugins {
 version = '0.0.1-SNAPSHOT'
 
 ext['byte-buddy.version'] = '1.14.10'
+ext['mockito.version'] = '5.8.0'
 
 java {
     toolchain {
@@ -85,7 +86,7 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:2.2.2'
-    testImplementation 'org.mockito:mockito-core:5.8.0'
+    testImplementation 'org.mockito:mockito-core'
     
     // Selenium E2E testing
     testImplementation 'org.seleniumhq.selenium:selenium-java:4.15.0'
