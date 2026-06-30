@@ -14,7 +14,8 @@ public class DefaultJwtServiceTest {
   @BeforeEach
   public void setUp() {
     jwtService =
-        new DefaultJwtService("123123123123123123123123123123123123123123123123123123123123", 3600);
+        new DefaultJwtService(
+            "12312312312312312312312312312312312312312312312312312312312312312312", 3600);
   }
 
   @Test
@@ -36,7 +37,8 @@ public class DefaultJwtServiceTest {
   @Test
   public void should_get_null_with_expired_jwt() {
     String token =
-        "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhaXNlbnNpeSIsImV4cCI6MTUwMjE2MTIwNH0.SJB-U60WzxLYNomqLo4G3v3LzFxJKuVrIud8D8Lz3-mgpo9pN1i7C8ikU_jQPJGm8HsC1CquGMI-rSuM7j6LDA";
+        "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhaXNlbnNpeSIsImV4cCI6MTUwMjE2MTIwNH0"
+            + ".wSdCB-GsORubLR-RozPFWpAPwNr0QFg3t9PlSeTUdtd1pR9u1WK6Os7a9H6CAxSvcJ8uL5Tu3sERBtDPqzHHbw";
     Assertions.assertFalse(jwtService.getSubFromToken(token).isPresent());
   }
 }
