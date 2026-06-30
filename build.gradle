@@ -16,6 +16,11 @@ targetCompatibility = '11'
 // Override the managed property so all selenium-* artifacts resolve to 4.45.0.
 ext['selenium.version'] = '4.45.0'
 
+// Spring Boot 2.6.3's BOM pins Mockito to ~4.0.0 and byte-buddy to an older version.
+// Override the managed properties so Mockito 5.x and its required byte-buddy resolve.
+ext['mockito.version'] = '5.23.0'
+ext['byte-buddy.version'] = '1.17.7'
+
 spotless {
     java {
         target project.fileTree(project.rootDir) {
@@ -84,7 +89,8 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:2.2.2'
-    testImplementation 'org.mockito:mockito-inline:4.0.0'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
     
     // Selenium E2E testing
     testImplementation 'org.seleniumhq.selenium:selenium-java:4.45.0'
