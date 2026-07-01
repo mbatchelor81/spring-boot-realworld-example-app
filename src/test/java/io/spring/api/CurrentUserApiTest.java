@@ -144,6 +144,210 @@ public class CurrentUserApiTest extends TestWithCurrentUser {
         .body("errors.email[0]", equalTo("email already exist"));
   }
 
+  @Test
+  public void should_get_error_if_username_exists_when_update_user_profile() throws Exception {
+    String newEmail = "newemail@example.com";
+    String newBio = "updated";
+    String newUsername = "existinguser";
+
+    Map<String, Object> param = prepareUpdateParam(newEmail, newBio, newUsername);
+
+    when(userRepository.findByEmail(eq(newEmail))).thenReturn(Optional.empty());
+    when(userRepository.findByUsername(eq(newUsername)))
+        .thenReturn(Optional.of(new User("other@email.com", newUsername, "123", "", "")));
+
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.username[0]", equalTo("username already exist"));
+  }
+
+  @Test
+  public void should_get_error_if_both_email_and_username_exist_when_update() throws Exception {
+    String newEmail = "taken@example.com";
+    String newBio = "updated";
+    String newUsername = "takenuser";
+
+    Map<String, Object> param = prepareUpdateParam(newEmail, newBio, newUsername);
+
+    when(userRepository.findByEmail(eq(newEmail)))
+        .thenReturn(Optional.of(new User(newEmail, "someone", "123", "", "")));
+    when(userRepository.findByUsername(eq(newUsername)))
+        .thenReturn(Optional.of(new User("someone@email.com", newUsername, "123", "", "")));
+
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422);
+  }
+
+  @Test
+  public void should_get_error_for_invalid_email_format_when_update() throws Exception {
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("email", "not-an-email");
+                    put("bio", "updated");
+                    put("username", "newuser");
+                  }
+                });
+          }
+        };
+
+    when(userRepository.findByUsername(eq("newuser"))).thenReturn(Optional.empty());
+    when(userRepository.findByEmail(eq("not-an-email"))).thenReturn(Optional.empty());
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.email[0]", equalTo("should be an email"));
+  }
+
+  @Test
+  public void should_update_with_password_only() throws Exception {
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("password", "newpassword123");
+                  }
+                });
+          }
+        };
+
+    when(userRepository.findByUsername(eq(""))).thenReturn(Optional.empty());
+    when(userRepository.findByEmail(eq(""))).thenReturn(Optional.empty());
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(200);
+  }
+
+  @Test
+  public void should_update_with_own_email_and_username() throws Exception {
+    Map<String, Object> param = prepareUpdateParam(email, "new bio", username);
+
+    when(userRepository.findByEmail(eq(email))).thenReturn(Optional.of(user));
+    when(userRepository.findByUsername(eq(username))).thenReturn(Optional.of(user));
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(200);
+  }
+
+  @Test
+  public void should_update_bio_only() throws Exception {
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("bio", "my new bio");
+                  }
+                });
+          }
+        };
+
+    when(userRepository.findByUsername(eq(""))).thenReturn(Optional.empty());
+    when(userRepository.findByEmail(eq(""))).thenReturn(Optional.empty());
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(200);
+  }
+
+  @Test
+  public void should_update_image_only() throws Exception {
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("image", "https://example.com/new-avatar.jpg");
+                  }
+                });
+          }
+        };
+
+    when(userRepository.findByUsername(eq(""))).thenReturn(Optional.empty());
+    when(userRepository.findByEmail(eq(""))).thenReturn(Optional.empty());
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(200);
+  }
+
+  @Test
+  public void should_get_401_without_token_on_put() throws Exception {
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + "invalidtoken")
+        .body(
+            new HashMap<String, Object>() {
+              {
+                put("user", new HashMap<String, Object>());
+              }
+            })
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(401);
+  }
+
   private HashMap<String, Object> prepareUpdateParam(
       final String newEmail, final String newBio, final String newUsername) {
     return new HashMap<String, Object>() {
