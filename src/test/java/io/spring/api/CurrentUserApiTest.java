@@ -176,4 +176,73 @@ public class CurrentUserApiTest extends TestWithCurrentUser {
         .then()
         .statusCode(401);
   }
+
+  @Test
+  public void should_get_401_with_malformed_authorization_header() throws Exception {
+    given()
+        .contentType("application/json")
+        .header("Authorization", "InvalidFormat")
+        .when()
+        .get("/user")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
+  public void should_get_401_with_authorization_header_missing_token() throws Exception {
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token ")
+        .when()
+        .get("/user")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
+  public void should_get_error_if_username_exists_when_update_user_profile() throws Exception {
+    String newEmail = "newemail@example.com";
+    String newBio = "updated";
+    String newUsername = "existingusername";
+
+    Map<String, Object> param = prepareUpdateParam(newEmail, newBio, newUsername);
+
+    when(userRepository.findByUsername(eq(newUsername)))
+        .thenReturn(Optional.of(new User("other@example.com", newUsername, "123", "", "")));
+    when(userRepository.findByEmail(eq(newEmail))).thenReturn(Optional.empty());
+
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.username[0]", equalTo("username already exist"));
+  }
+
+  @Test
+  public void should_get_error_if_invalid_email_format_when_update_user_profile() throws Exception {
+    String newEmail = "invalidemail";
+    String newBio = "updated";
+    String newUsername = "newusername";
+
+    Map<String, Object> param = prepareUpdateParam(newEmail, newBio, newUsername);
+
+    when(userRepository.findByUsername(eq(newUsername))).thenReturn(Optional.empty());
+    when(userRepository.findByEmail(eq(newEmail))).thenReturn(Optional.empty());
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.email[0]", equalTo("should be an email"));
+  }
 }
