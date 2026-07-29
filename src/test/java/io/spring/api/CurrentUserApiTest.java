@@ -176,4 +176,112 @@ public class CurrentUserApiTest extends TestWithCurrentUser {
         .then()
         .statusCode(401);
   }
+
+  @Test
+  public void should_get_401_with_malformed_authorization_header() throws Exception {
+    given()
+        .contentType("application/json")
+        .header("Authorization", "InvalidToken123")
+        .when()
+        .get("/user")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
+  public void should_get_401_with_authorization_header_without_token_value() throws Exception {
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token")
+        .when()
+        .get("/user")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
+  public void should_get_401_with_empty_authorization_header() throws Exception {
+    given()
+        .contentType("application/json")
+        .header("Authorization", "")
+        .when()
+        .get("/user")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
+  public void should_get_error_if_username_exists_when_update_user_profile() throws Exception {
+    String newEmail = "newemail@example.com";
+    String newUsername = "existingusername";
+
+    Map<String, Object> param = prepareUpdateParam(newEmail, "bio", newUsername);
+
+    when(userRepository.findByUsername(eq(newUsername)))
+        .thenReturn(Optional.of(new User("other@example.com", newUsername, "123", "", "")));
+    when(userRepository.findByEmail(eq(newEmail))).thenReturn(Optional.empty());
+    when(userQueryService.findById(eq(user.getId()))).thenReturn(Optional.of(userData));
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.username[0]", equalTo("username already exist"));
+  }
+
+  @Test
+  public void should_get_error_for_invalid_email_format_on_update() throws Exception {
+    String invalidEmail = "notanemail";
+    String newUsername = "newusername";
+
+    Map<String, Object> param = prepareUpdateParam(invalidEmail, "bio", newUsername);
+
+    when(userRepository.findByUsername(eq(newUsername))).thenReturn(Optional.empty());
+    when(userRepository.findByEmail(eq(invalidEmail))).thenReturn(Optional.empty());
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + token)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(422)
+        .body("errors.email[0]", equalTo("should be an email"));
+  }
+
+  @Test
+  public void should_get_401_with_invalid_token_on_update() throws Exception {
+    String invalidToken = "invalidtoken";
+    when(jwtService.getSubFromToken(eq(invalidToken))).thenReturn(Optional.empty());
+
+    Map<String, Object> param = prepareUpdateParam("new@example.com", "bio", "newusername");
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Token " + invalidToken)
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(401);
+  }
+
+  @Test
+  public void should_get_401_with_malformed_header_on_update() throws Exception {
+    Map<String, Object> param = prepareUpdateParam("new@example.com", "bio", "newusername");
+
+    given()
+        .contentType("application/json")
+        .header("Authorization", "Bearer invalidtoken")
+        .body(param)
+        .when()
+        .put("/user")
+        .then()
+        .statusCode(401);
+  }
 }
