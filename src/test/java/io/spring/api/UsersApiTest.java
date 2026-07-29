@@ -268,4 +268,171 @@ public class UsersApiTest {
         .statusCode(422)
         .body("message", equalTo("invalid email or password"));
   }
+
+  @Test
+  public void should_show_error_message_for_blank_password() throws Exception {
+    String email = "john@jacob.com";
+    String username = "johnjacob";
+
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("email", email);
+                    put("password", "");
+                    put("username", username);
+                  }
+                });
+          }
+        };
+
+    given()
+        .contentType("application/json")
+        .body(param)
+        .when()
+        .post("/users")
+        .then()
+        .statusCode(422)
+        .body("errors.password[0]", equalTo("can't be empty"));
+  }
+
+  @Test
+  public void should_show_multiple_validation_errors() throws Exception {
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("email", "invalidemail");
+                    put("password", "");
+                    put("username", "");
+                  }
+                });
+          }
+        };
+
+    given()
+        .contentType("application/json")
+        .body(param)
+        .when()
+        .post("/users")
+        .then()
+        .statusCode(422)
+        .body("errors.email[0]", equalTo("should be an email"))
+        .body("errors.password[0]", equalTo("can't be empty"))
+        .body("errors.username[0]", equalTo("can't be empty"));
+  }
+
+  @Test
+  public void should_show_error_for_blank_email_on_login() throws Exception {
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("email", "");
+                    put("password", "password123");
+                  }
+                });
+          }
+        };
+
+    given()
+        .contentType("application/json")
+        .body(param)
+        .when()
+        .post("/users/login")
+        .then()
+        .statusCode(422)
+        .body("errors.email[0]", equalTo("can't be empty"));
+  }
+
+  @Test
+  public void should_show_error_for_blank_password_on_login() throws Exception {
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("email", "john@jacob.com");
+                    put("password", "");
+                  }
+                });
+          }
+        };
+
+    given()
+        .contentType("application/json")
+        .body(param)
+        .when()
+        .post("/users/login")
+        .then()
+        .statusCode(422)
+        .body("errors.password[0]", equalTo("can't be empty"));
+  }
+
+  @Test
+  public void should_show_error_for_invalid_email_format_on_login() throws Exception {
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("email", "notanemail");
+                    put("password", "password123");
+                  }
+                });
+          }
+        };
+
+    given()
+        .contentType("application/json")
+        .body(param)
+        .when()
+        .post("/users/login")
+        .then()
+        .statusCode(422)
+        .body("errors.email[0]", equalTo("should be an email"));
+  }
+
+  @Test
+  public void should_fail_login_with_non_existent_user() throws Exception {
+    String email = "nonexistent@example.com";
+
+    when(userRepository.findByEmail(eq(email))).thenReturn(Optional.empty());
+
+    Map<String, Object> param =
+        new HashMap<String, Object>() {
+          {
+            put(
+                "user",
+                new HashMap<String, Object>() {
+                  {
+                    put("email", email);
+                    put("password", "password123");
+                  }
+                });
+          }
+        };
+
+    given()
+        .contentType("application/json")
+        .body(param)
+        .when()
+        .post("/users/login")
+        .then()
+        .statusCode(422)
+        .body("message", equalTo("invalid email or password"));
+  }
 }
